@@ -9,18 +9,31 @@ const execFileAsync = promisify(execFile);
 const isWindows = process.platform === "win32";
 const isMac = process.platform === "darwin";
 
-function skinRoot() {
+function sourceSkinRoot() {
   return app.isPackaged ? path.join(process.resourcesPath, "skin") : path.resolve(__dirname, "..");
 }
-function platformRoot() { return path.join(skinRoot(), isWindows ? "windows" : "macos"); }
-function scriptPath(name) { return path.join(platformRoot(), "scripts", name); }
-function run(command, args, options = {}) {
-  return execFileAsync(command, args, { cwd: platformRoot(), windowsHide: true, maxBuffer: 8 * 1024 * 1024, ...options });
-}
-function runPlatformScript(script, args = []) {
+function sourcePlatformRoot() { return path.join(sourceSkinRoot(), isWindows ? "windows" : "macos"); }
+function installedPlatformRoot() {
   return isWindows
-    ? run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath(script), ...args])
-    : run("/bin/bash", [scriptPath(script), ...args]);
+    ? path.join(process.env.LOCALAPPDATA || "", "CodexDreamSkin", "engine")
+    : path.join(process.env.HOME || "", ".codex", "codex-dream-skin-studio");
+}
+function hasInstalledRuntime() {
+  const requiredScripts = isWindows
+    ? ["start-dream-skin.ps1", "desktop-actions.ps1"]
+    : ["start-dream-skin-macos.sh", "status-dream-skin-macos.sh"];
+  return requiredScripts.every((script) => fs.existsSync(path.join(installedPlatformRoot(), "scripts", script)));
+}
+function platformRoot(useSource = false) { return useSource || !hasInstalledRuntime() ? sourcePlatformRoot() : installedPlatformRoot(); }
+function scriptPath(name, useSource = false) { return path.join(platformRoot(useSource), "scripts", name); }
+function run(command, args, options = {}) {
+  return execFileAsync(command, args, { windowsHide: true, maxBuffer: 8 * 1024 * 1024, ...options });
+}
+function runPlatformScript(script, args = [], useSource = false) {
+  const root = platformRoot(useSource);
+  return isWindows
+    ? run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath(script, useSource), ...args], { cwd: root })
+    : run("/bin/bash", [scriptPath(script, useSource), ...args], { cwd: root });
 }
 function parseJsonOutput(stdout) {
   const candidate = String(stdout || "").trim().split(/\r?\n/).filter(Boolean).at(-1) || "{}";
@@ -28,11 +41,14 @@ function parseJsonOutput(stdout) {
 }
 
 async function getStatus() {
+  if (!hasInstalledRuntime()) {
+    return { platform: isWindows ? "Windows" : "macOS", available: false, installed: false, message: "尚未安装换肤运行时。" };
+  }
   if (isMac) {
     try {
       const result = await runPlatformScript("status-dream-skin-macos.sh", ["--json"]);
       const data = parseJsonOutput(result.stdout);
-      return { platform: "macOS", available: true, ...data };
+      return { platform: "macOS", available: true, installed: true, ...data };
     } catch (error) {
       return { platform: "macOS", available: false, message: error.message };
     }
@@ -46,7 +62,7 @@ async function getStatus() {
   }
 }
 function listPresets() {
-  const root = path.join(platformRoot(), "presets");
+  const root = path.join(sourcePlatformRoot(), "presets");
   if (!fs.existsSync(root)) return [];
   return fs.readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => {
     const directory = path.join(root, entry.name);
@@ -69,6 +85,9 @@ async function chooseImage() {
 }
 async function performAction(action, value) {
   const actions = {
+    install: () => isMac
+      ? runPlatformScript("install-dream-skin-macos.sh", ["--no-launchers", "--no-launch"], true)
+      : runPlatformScript("install-dream-skin.ps1", ["-NoShortcuts"], true),
     start: () => isMac ? runPlatformScript("start-dream-skin-macos.sh", ["--prompt-restart"]) : runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]),
     restore: () => isMac ? runPlatformScript("restore-dream-skin-macos.sh", ["--restore-base-theme", "--restart-codex"]) : runPlatformScript("restore-dream-skin.ps1", ["-RestoreBaseTheme", "-PromptRestart"]),
     pause: async () => {

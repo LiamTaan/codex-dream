@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "description": "Cross-platform desktop control panel for Codex Dream Skin.",
+  "author": "LiamTaan",
+  "homepage": "https://github.com/LiamTaan/codex-dream",
   "main": "main.js",
   "type": "commonjs",
   "scripts": {

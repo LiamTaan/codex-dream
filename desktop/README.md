@@ -13,6 +13,8 @@ npm start
 
 `npm start` 会根据当前系统调用对应平台的脚本：macOS 使用 Shell/Node.js，Windows 使用 PowerShell/Node.js。
 
+首次启动时点击“安装运行时”。桌面应用会把内置的平台运行时安装到用户目录，之后所有操作都调用受管副本。macOS 使用 Codex 自带的签名 Node.js；Windows 当前要求系统安装 Node.js 22 或更高版本。
+
 ## 构建
 
 ```bash
