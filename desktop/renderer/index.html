@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codex Dream Skin</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand-lockup"><div class="brand-mark" aria-hidden="true">✦</div><div><div class="eyebrow">CODEX DREAM SKIN</div><h1>把工作台换成你喜欢的氛围</h1></div></div>
+        <button class="ghost-button" id="open-state">打开运行目录</button>
+      </header>
+      <section class="hero-grid">
+        <div class="hero-panel">
+          <div class="status-row"><span class="status-dot" id="status-dot"></span><span id="status-label">正在检查运行状态…</span><span class="platform-pill" id="platform-label">—</span></div>
+          <h2 id="active-theme">准备好为 Codex 换一张脸了吗？</h2>
+          <p id="status-message">桌面面板会调用当前平台的官方换肤运行时，不修改 Codex 安装文件。</p>
+          <div class="action-row"><button class="primary-button" data-action="start">应用皮肤</button><button class="secondary-button" data-action="pause">暂停显示</button><button class="secondary-button" data-action="restore">恢复官方外观</button></div>
+        </div>
+        <aside class="quick-panel"><div class="section-kicker">QUICK ACTIONS</div><button class="quick-action" data-action="customize"><span>＋</span><div><strong>导入一张背景图</strong><small>使用你的图片创建主题</small></div></button><button class="quick-action" id="refresh"><span>↻</span><div><strong>刷新运行状态</strong><small>重新读取当前平台状态</small></div></button><div class="runtime-note">安全边界：本机回环 CDP · 不改官方安装包</div></aside>
+      </section>
+      <section class="library-section"><div class="section-heading"><div><div class="section-kicker">THEME LIBRARY</div><h3>精选主题</h3></div><span id="theme-count">—</span></div><div class="theme-grid" id="theme-grid"></div></section>
+      <footer class="footer"><span>Codex Dream Skin · Personal desktop edition</span><span id="last-updated">—</span></footer>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

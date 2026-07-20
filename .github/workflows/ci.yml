@@ -105,6 +105,12 @@ jobs:
           node macos/scripts/injector.mjs --check-payload >/dev/null
           node windows/scripts/injector.mjs --check-payload >/dev/null
 
+      - name: Check desktop control panel
+        shell: bash
+        run: |
+          npm ci --prefix desktop --ignore-scripts
+          npm run check --prefix desktop
+
   windows-tests:
     name: Windows (${{ matrix.name }})
     runs-on: windows-latest

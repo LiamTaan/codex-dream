@@ -175,6 +175,12 @@ powershell -ExecutionPolicy Bypass -File .\windows\scripts\start-dream-skin.ps1
 - 不修改官方安装目录与代码签名
 - **不会**自动改写 API Key / Base URL；中转与换肤分开
 
+## 跨平台桌面控制面板
+
+仓库新增 `desktop/`，提供 macOS 和 Windows 共用的桌面控制面板。它复用平台脚本，集中提供状态查看、应用、暂停、恢复、背景导入和主题预览。
+
+开发运行和打包方式见 [`desktop/README.md`](./desktop/README.md)。
+
 ## 许可与声明
 
 - 见 [`macos/LICENSE`](./macos/LICENSE)（MIT）与 [`macos/NOTICE.md`](./macos/NOTICE.md)

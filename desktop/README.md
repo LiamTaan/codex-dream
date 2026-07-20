@@ -1,0 +1,31 @@
+# Codex Dream Skin Desktop
+
+这是跨平台控制面板，复用仓库内的 macOS / Windows 换肤运行时，不直接修改 Codex 官方安装文件。
+
+## 开发运行
+
+在本目录执行：
+
+```bash
+npm install
+npm start
+```
+
+`npm start` 会根据当前系统调用对应平台的脚本：macOS 使用 Shell/Node.js，Windows 使用 PowerShell/Node.js。
+
+## 构建
+
+```bash
+npm run dist:mac
+npm run dist:win
+```
+
+macOS 构建输出 ZIP/DMG，Windows 构建输出安装程序和 ZIP。Windows 安装包应在 GitHub Actions 的 Windows Runner 上构建。
+
+## 当前能力
+
+- 读取 macOS 运行状态和当前主题。
+- 启动、暂停和恢复 macOS 换肤运行时。
+- 在 macOS 面板中导入图片并创建主题。
+- Windows 中启动、恢复并打开系统托盘控制。
+- 浏览当前平台内置主题预览。

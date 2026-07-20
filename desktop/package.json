@@ -1,0 +1,32 @@
+{
+  "name": "codex-dream-skin-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-platform desktop control panel for Codex Dream Skin.",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.js && node --check preload.js && node --check renderer/app.js",
+    "dist:mac": "electron-builder --mac zip dmg",
+    "dist:win": "electron-builder --win nsis zip"
+  },
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.liamtaan.codexdreamskin",
+    "productName": "Codex Dream Skin",
+    "asar": true,
+    "files": ["main.js", "preload.js", "renderer/**"],
+    "extraResources": [{
+      "from": "..",
+      "to": "skin",
+      "filter": ["macos/**", "windows/**", "LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"]
+    }],
+    "mac": { "category": "public.app-category.utilities", "target": ["zip", "dmg"] },
+    "win": { "target": ["nsis", "zip"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true }
+  }
+}
