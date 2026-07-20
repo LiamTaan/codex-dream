@@ -1,7 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
-const { execFile, spawn } = require("node:child_process");
+const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { pathToFileURL } = require("node:url");
 
@@ -22,14 +22,6 @@ function runPlatformScript(script, args = []) {
     ? run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath(script), ...args])
     : run("/bin/bash", [scriptPath(script), ...args]);
 }
-function launchPlatformScript(script, args = []) {
-  const command = isWindows ? "powershell.exe" : "/bin/bash";
-  const commandArgs = isWindows
-    ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath(script), ...args]
-    : [scriptPath(script), ...args];
-  const child = spawn(command, commandArgs, { detached: true, stdio: "ignore", windowsHide: true });
-  child.unref();
-}
 function parseJsonOutput(stdout) {
   const candidate = String(stdout || "").trim().split(/\r?\n/).filter(Boolean).at(-1) || "{}";
   try { return JSON.parse(candidate); } catch { return { raw: String(stdout || "").trim() }; }
@@ -45,8 +37,13 @@ async function getStatus() {
       return { platform: "macOS", available: false, message: error.message };
     }
   }
-  const statePath = path.join(process.env.LOCALAPPDATA || "", "CodexDreamSkin", "state.json");
-  return { platform: "Windows", available: fs.existsSync(statePath), message: fs.existsSync(statePath) ? "状态由 Windows 运行时管理。" : "尚未安装 Windows 运行时。" };
+  try {
+    const result = await runPlatformScript("desktop-actions.ps1", ["-Action", "Status"]);
+    const data = parseJsonOutput(result.stdout);
+    return { platform: "Windows", available: Boolean(data.installed), message: data.installed ? "Windows 运行时已就绪。" : "尚未安装 Windows 运行时。", ...data };
+  } catch (error) {
+    return { platform: "Windows", available: false, message: error.message };
+  }
 }
 function listPresets() {
   const root = path.join(platformRoot(), "presets");
@@ -62,16 +59,32 @@ function listPresets() {
 async function chooseImage() {
   const result = await dialog.showOpenDialog({ title: "选择 Codex 主题背景", properties: ["openFile"], filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "heic", "tif", "tiff"] }] });
   if (result.canceled || !result.filePaths[0]) return { canceled: true };
-  if (isMac) await runPlatformScript("load-image-theme-macos.sh", ["--file", result.filePaths[0]]);
-  else launchPlatformScript("tray-dream-skin.ps1");
+  if (isMac) {
+    await runPlatformScript("load-image-theme-macos.sh", ["--file", result.filePaths[0]]);
+  } else {
+    await runPlatformScript("desktop-actions.ps1", ["-Action", "ApplyImage", "-ImagePath", result.filePaths[0]]);
+    await runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]);
+  }
   return { canceled: false, imagePath: result.filePaths[0] };
 }
-async function performAction(action) {
+async function performAction(action, value) {
   const actions = {
     start: () => isMac ? runPlatformScript("start-dream-skin-macos.sh", ["--prompt-restart"]) : runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]),
     restore: () => isMac ? runPlatformScript("restore-dream-skin-macos.sh", ["--restore-base-theme", "--restart-codex"]) : runPlatformScript("restore-dream-skin.ps1", ["-RestoreBaseTheme", "-PromptRestart"]),
-    pause: () => isMac ? runPlatformScript("pause-dream-skin-macos.sh") : launchPlatformScript("tray-dream-skin.ps1"),
-    customize: () => isMac ? runPlatformScript("customize-theme-macos.sh") : launchPlatformScript("tray-dream-skin.ps1"),
+    pause: async () => {
+      const status = await getStatus();
+      if (status.paused || status.session === "paused") {
+        return isMac
+          ? runPlatformScript("start-dream-skin-macos.sh", ["--prompt-restart"])
+          : runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]);
+      }
+      return isMac
+        ? runPlatformScript("pause-dream-skin-macos.sh")
+        : runPlatformScript("desktop-actions.ps1", ["-Action", "Pause"]);
+    },
+    applyPreset: () => isMac
+      ? runPlatformScript("switch-theme-macos.sh", ["--id", value])
+      : runPlatformScript("desktop-actions.ps1", ["-Action", "ApplyPreset", "-ThemeId", value]).then(() => runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"])),
   };
   if (!actions[action]) throw new Error(`Unknown action: ${action}`);
   const result = await actions[action]();
@@ -85,9 +98,12 @@ function createWindow() {
 ipcMain.handle("status", getStatus);
 ipcMain.handle("presets", () => listPresets());
 ipcMain.handle("action", (_event, action) => performAction(action));
+ipcMain.handle("apply-preset", (_event, themeId) => performAction("applyPreset", themeId));
 ipcMain.handle("choose-image", chooseImage);
 ipcMain.handle("open-state", async () => {
-  const statePath = isWindows ? path.join(process.env.LOCALAPPDATA || "", "CodexDreamSkin") : path.join(process.env.HOME || "", ".codex", "codex-dream-skin-studio");
+  const statePath = isWindows
+    ? path.join(process.env.LOCALAPPDATA || "", "CodexDreamSkin")
+    : path.join(process.env.HOME || "", "Library", "Application Support", "CodexDreamSkinStudio");
   await shell.openPath(statePath);
   return statePath;
 });

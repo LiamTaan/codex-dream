@@ -58,6 +58,7 @@ function Get-DreamSkinRuntimeEnginePaths {
     Start = Join-Path $scripts 'start-dream-skin.ps1'
     Restore = Join-Path $scripts 'restore-dream-skin.ps1'
     Tray = Join-Path $scripts 'tray-dream-skin.ps1'
+    DesktopActions = Join-Path $scripts 'desktop-actions.ps1'
   }
 }
 
@@ -134,6 +135,7 @@ function Install-DreamSkinRuntimeEngine {
     'presets\preset-gothic-void-crusade\theme.json',
     'scripts\common-windows.ps1',
     'scripts\config-utf8.ps1',
+    'scripts\desktop-actions.ps1',
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
     'scripts\install-dream-skin.ps1',
