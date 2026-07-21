@@ -179,7 +179,9 @@ powershell -ExecutionPolicy Bypass -File .\windows\scripts\start-dream-skin.ps1
 
 仓库新增 `desktop/`，提供 macOS 和 Windows 共用的桌面控制面板。它复用平台脚本，集中提供状态查看、应用、暂停、恢复、背景导入和主题预览。
 
-开发运行和打包方式见 [`desktop/README.md`](./desktop/README.md)。
+普通用户可从 [Releases](https://github.com/LiamTaan/codex-dream/releases/latest) 下载 macOS 的 DMG 或 Windows 的 EXE 安装程序。首次启动后点击“安装运行时”，再选择预设或导入自己的图片。
+
+开发运行、平台要求和打包方式见 [`desktop/README.md`](./desktop/README.md)。
 
 ## 许可与声明
 

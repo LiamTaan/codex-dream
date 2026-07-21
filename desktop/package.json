@@ -10,7 +10,7 @@
   "scripts": {
     "start": "electron .",
     "check": "node --check main.js && node --check preload.js && node --check renderer/app.js",
-    "dist:mac": "electron-builder --mac zip dmg",
+    "dist:mac": "electron-builder --mac zip dmg --x64 --arm64",
     "dist:win": "electron-builder --win nsis zip"
   },
   "devDependencies": {
@@ -20,15 +20,16 @@
   "build": {
     "appId": "com.liamtaan.codexdreamskin",
     "productName": "Codex Dream Skin",
+    "icon": "assets/icon.png",
     "asar": true,
-    "files": ["main.js", "preload.js", "renderer/**"],
+    "files": ["main.js", "preload.js", "renderer/**", "assets/icon.png"],
     "extraResources": [{
       "from": "..",
       "to": "skin",
       "filter": ["macos/**", "windows/**", "LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"]
     }],
-    "mac": { "category": "public.app-category.utilities", "target": ["zip", "dmg"] },
-    "win": { "target": ["nsis", "zip"] },
+    "mac": { "category": "public.app-category.utilities", "icon": "assets/icon.icns", "target": ["zip", "dmg"] },
+    "win": { "icon": "assets/icon.ico", "target": ["nsis", "zip"] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true }
   }
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Codex Dream Skin application icon">
+  <rect width="1024" height="1024" rx="224" fill="#171717"/>
+  <path d="M270 258h308c98 0 176 79 176 176v156c0 98-78 176-176 176H270V258Z" fill="#F2B84B"/>
+  <path d="M350 338h204c66 0 120 54 120 120v108c0 66-54 120-120 120H350V338Z" fill="#171717"/>
+  <path d="M444 390h98c49 0 88 39 88 88v68c0 49-39 88-88 88h-98V390Z" fill="#F2B84B"/>
+  <circle cx="745" cy="279" r="38" fill="#F8E4B4"/>
+  <circle cx="245" cy="745" r="25" fill="#F8E4B4"/>
+</svg>
