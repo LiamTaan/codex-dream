@@ -256,6 +256,10 @@ input::placeholder { color: #68717a; }
 .notice svg { width: 17px; height: 17px; flex: 0 0 auto; color: var(--danger); }
 .notice strong { display: block; font-size: 13px; }
 .notice p { margin-top: 2px; color: var(--text-secondary); font-size: 12px; }
+.notice-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
+.notice .notice-close { width: 28px; height: 28px; color: var(--text-secondary); }
+.notice .notice-close:hover { color: var(--text); }
+.notice .notice-close svg { width: 15px; height: 15px; color: currentColor; }
 .text-button { flex: 0 0 auto; padding: 4px; border: 0; background: transparent; color: var(--accent-hover); font-size: 12px; }
 .modal { width: min(620px, calc(100vw - 48px)); padding: 0; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface-low); color: var(--text); box-shadow: 0 24px 80px rgba(0,0,0,.54); }
 .modal::backdrop { background: rgba(4, 6, 8, .72); }

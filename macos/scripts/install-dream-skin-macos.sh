@@ -19,6 +19,23 @@ done
 case "$PORT" in ''|*[!0-9]*) fail "Invalid port: $PORT" ;; esac
 [ "$PORT" -ge 1024 ] && [ "$PORT" -le 65535 ] || fail "Port must be between 1024 and 65535."
 
+# Take ownership of an existing installation before replacing its directory.
+# The previous watcher can keep executing files from the old tree after the
+# directory move, so waiting until the new copy is in place makes upgrades
+# race-prone. Codex must already be closed; otherwise leave both the app and
+# recorded injector untouched and ask the user to retry safely.
+discover_codex_app
+require_macos_runtime
+ensure_state_root
+codex_is_running && fail "Close Codex before upgrading the Dream Skin runtime so the existing session can be handed over safely."
+if [ -f "$STATE_PATH" ]; then
+  if ! stop_recorded_injector; then
+    /bin/sleep 0.25
+    stop_recorded_injector \
+      || fail "Could not safely stop the previous Dream Skin runtime before upgrade. Reopen the manager and retry."
+  fi
+fi
+
 deploy_project() {
   local temporary="$INSTALL_ROOT.installing.$$"
   local previous="$INSTALL_ROOT.previous.$$"
@@ -48,10 +65,7 @@ if [ "$IN_PLACE" = "false" ] && [ "$PROJECT_ROOT" != "$INSTALL_ROOT" ]; then
   exec "$INSTALL_ROOT/scripts/install-dream-skin-macos.sh" "${install_args[@]}"
 fi
 
-discover_codex_app
-require_macos_runtime
 ensure_state_root
-codex_is_running && fail "Close Codex before installation so config.toml cannot be rewritten while the app is saving it."
 seed_bundled_presets
 if [ ! -f "$THEME_DIR/theme.json" ]; then
   "$SCRIPT_DIR/switch-theme-macos.sh" --id preset-gothic-void-crusade --no-apply >/dev/null

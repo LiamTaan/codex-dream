@@ -478,6 +478,21 @@ if /usr/bin/grep -F -q 'set +e' "$ROOT/scripts/start-dream-skin-macos.sh"; then
 fi
 /usr/bin/grep -F -q 'if ! stop_recorded_injector; then' \
   "$ROOT/scripts/start-dream-skin-macos.sh"
+/usr/bin/grep -F -q 'Could not safely replace the previous Dream Skin runtime.' \
+  "$ROOT/scripts/start-dream-skin-macos.sh"
+/usr/bin/grep -F -q 'Could not safely stop the previous Dream Skin runtime before upgrade.' \
+  "$ROOT/scripts/install-dream-skin-macos.sh"
+INSTALL_TAKEOVER_LINE="$(/usr/bin/grep -n -m1 'stop_recorded_injector' "$ROOT/scripts/install-dream-skin-macos.sh" | /usr/bin/cut -d: -f1)"
+INSTALL_DEPLOY_LINE="$(/usr/bin/grep -n -m1 '^  deploy_project$' "$ROOT/scripts/install-dream-skin-macos.sh" | /usr/bin/cut -d: -f1)"
+[ -n "$INSTALL_TAKEOVER_LINE" ] && [ -n "$INSTALL_DEPLOY_LINE" ] \
+  && [ "$INSTALL_TAKEOVER_LINE" -lt "$INSTALL_DEPLOY_LINE" ] \
+  || { printf 'installer must stop the previous injector before replacing its runtime tree.\n' >&2; exit 1; }
+/usr/bin/grep -F -q 'finish_client_operation "$PORT" success "皮肤已应用"' \
+  "$ROOT/scripts/start-dream-skin-macos.sh"
+if /usr/bin/grep -F -q 'pgrep -x ChatGPT' "$ROOT/scripts/status-dream-skin-macos.sh"; then
+  printf 'status script still relies on a truncated macOS process name.\n' >&2
+  exit 1
+fi
 if /usr/bin/grep -F -q 'launchctl remove "$INJECTOR_JOB_LABEL" >/dev/null 2>&1 || /bin/kill -TERM "$INJECTOR_PID"' \
   "$ROOT/scripts/start-dream-skin-macos.sh"; then
   printf 'start script still deletes state without identity-bound injector cleanup.\n' >&2
@@ -842,7 +857,7 @@ CRLF_BACKUP="$TMP/config-crlf-backup.json"
 "$NODE" "$ROOT/scripts/theme-config.mjs" restore "$CRLF_CONFIG" "$CRLF_BACKUP" >/dev/null
 /usr/bin/cmp -s "$CRLF_CONFIG" "$TMP/original-crlf.toml"
 
-/usr/bin/env -u HOME /bin/bash -c '. "$1/scripts/common-macos.sh"; [ -n "$HOME" ] && [ "$SKIN_VERSION" = "1.2.0" ]' _ "$ROOT"
+/usr/bin/env -u HOME /bin/bash -c '. "$1/scripts/common-macos.sh"; [ -n "$HOME" ] && [ "$SKIN_VERSION" = "1.2.1" ]' _ "$ROOT"
 if [ "${CODEX_DREAM_SKIN_SKIP_DOCTOR:-0}" = "1" ]; then
   printf 'SKIP: Doctor requires an installed, signed Codex app.\n'
   DOCTOR_RESULT="skipped"

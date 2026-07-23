@@ -86,5 +86,10 @@ assert.match(
   /for \(const id of rejected\) \{\s*if \(!activeIds\.has\(id\)\) rejected\.delete\(id\);\s*\}/,
   "Rejected target IDs must be pruned after targets leave so the watcher cannot grow indefinitely.",
 );
+assert.match(
+  source,
+  /pollTimer = setInterval\(scheduleRead, 500\)[\s\S]*clearInterval\(pollTimer\)/,
+  "Operation state must be polled as a fallback and its timer released on watcher shutdown.",
+);
 
 console.log("PASS: early injection is shell-guarded, generation-safe, and removed on shutdown.");

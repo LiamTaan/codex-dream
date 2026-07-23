@@ -127,6 +127,7 @@ function Install-DreamSkinRuntimeEngine {
   $fullStateRoot = [System.IO.Path]::GetFullPath($StateRoot)
   $engine = Get-DreamSkinRuntimeEnginePaths -StateRoot $fullStateRoot
   $required = @(
+    'VERSION',
     'assets\dream-reference.jpg',
     'assets\dream-skin.css',
     'assets\renderer-inject.js',
@@ -169,6 +170,8 @@ function Install-DreamSkinRuntimeEngine {
   Ensure-DreamSkinManagedDirectory -Path $stagingRoot -Root $fullStateRoot
 
   try {
+    Copy-Item -LiteralPath (Join-Path $sourceRoot 'VERSION') -Destination $stagingRoot `
+      -Force -ErrorAction Stop
     foreach ($directoryName in $runtimeDirectories) {
       Copy-Item -LiteralPath (Join-Path $sourceRoot $directoryName) -Destination $stagingRoot `
         -Recurse -Force -ErrorAction Stop
