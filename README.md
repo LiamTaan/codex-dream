@@ -49,6 +49,12 @@
 
 感谢上游维护者和贡献者公开核心换肤实现。本仓库不是对上游来源的替代或抹除；衍生代码继续遵循上游 MIT 许可要求，详见 [LICENSE](./LICENSE)、[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) 和 [macos/NOTICE.md](./macos/NOTICE.md)。
 
+## v1.1.1 主要更新
+
+- 修复 macOS 安装包缺少完整应用包签名、下载后被 Gatekeeper 误报为“应用已损坏”的问题；
+- 发布流程现在会挂载 arm64 和 x64 DMG，对内部 `.app` 执行严格签名、Bundle ID 与架构校验；
+- 当前使用完整 ad-hoc bundle 签名，不等同于 Apple Developer ID 签名或 Apple 公证。
+
 ## v1.1.0 主要更新
 
 - 重新设计桌面端主题库、主题工作室和运行诊断界面；
@@ -75,7 +81,7 @@
 3. 在主题库选择内置主题，或到主题工作室导入自己的图片；
 4. 点击“应用这套主题”。
 
-当前 macOS 构建未做 Apple 公证，首次启动可能需要在“系统设置 → 隐私与安全性”中确认打开。Windows 开发运行当前要求系统安装 Node.js 22 或更高版本。
+当前 macOS 安装包已有完整 ad-hoc bundle 签名，但尚未使用 Apple Developer ID 签名和 Apple 公证。因此首次启动仍可能提示“无法验证开发者”，需要在“系统设置 → 隐私与安全性”中确认打开；正常情况下不应再显示“应用已损坏”。Windows 开发运行当前要求系统安装 Node.js 22 或更高版本。
 
 ## 本地开发
 

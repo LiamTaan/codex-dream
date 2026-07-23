@@ -41,6 +41,12 @@ The upstream project established the core macOS and Windows theming foundation: 
 
 We gratefully acknowledge the upstream maintainers and contributors. The source is not being presented as an unrelated clean-room implementation. See [LICENSE](./LICENSE), [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md), and [macos/NOTICE.md](./macos/NOTICE.md).
 
+## v1.1.1 highlights
+
+- fixed incomplete macOS application-bundle signing that caused quarantined downloads to be reported as damaged;
+- the release workflow now mounts both arm64 and x64 DMGs and verifies the embedded app signature, bundle identifier, and architecture;
+- macOS packages currently use a complete ad-hoc bundle signature, which is not the same as Developer ID signing or Apple notarization.
+
 ## v1.1.0 highlights
 
 - redesigned theme library, theme studio, and diagnostics UI;
@@ -62,7 +68,7 @@ Download the latest package from [GitHub Releases](https://github.com/LiamTaan/c
 
 On first launch, click **Install Runtime**, wait for the runtime-ready state, then apply a bundled theme or import your own image in Theme Studio.
 
-The current macOS build is not notarized, so the first launch may require approval under **System Settings → Privacy & Security**. Windows development currently requires Node.js 22 or newer.
+The macOS package now has a complete ad-hoc bundle signature, but it is not yet signed with an Apple Developer ID or notarized by Apple. The first launch may therefore show an unidentified-developer warning and require approval under **System Settings → Privacy & Security**; it should no longer be reported as damaged under normal conditions. Windows development currently requires Node.js 22 or newer.
 
 ## Development
 
