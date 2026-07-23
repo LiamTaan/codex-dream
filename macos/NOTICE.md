@@ -29,6 +29,18 @@ The following user/maintainer-supplied files are excluded from the MIT software 
 
 They are included at the maintainer's direction as a local theme preset, source archive, and real runtime previews. They are not official OpenAI/Codex artwork. The preset name is a maintainer label and does not imply the named person's participation, approval, or endorsement. Their inclusion does not certify or grant third-party likeness, model-output, or redistribution rights. Downstream redistribution and commercial use require an independent rights review; the two runtime screenshots are documentation previews and must never be imported as wallpapers.
 
+## Preset 001 reference material
+
+The following user-supplied files are excluded from the MIT software license:
+
+- `presets/preset-001/background.webp`
+- `../windows/presets/preset-001/background.webp`
+
+They are bundled at the maintainer's direction as theme artwork and are not
+official OpenAI/Codex visuals. Their inclusion does not certify or grant
+third-party likeness, model-output, or redistribution rights. Downstream
+redistribution and commercial use require an independent rights review.
+
 ## Runtime
 
 This project does not redistribute Node.js. At runtime it validates and uses the Node.js executable already signed and bundled inside the user's official Codex desktop application.

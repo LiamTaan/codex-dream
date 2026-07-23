@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "preset-001",
+  "name": "001",
+  "brandSubtitle": "CODEX DREAM SKIN",
+  "tagline": "Make something wonderful.",
+  "projectPrefix": "选择项目 · ",
+  "projectLabel": "◉  选择项目",
+  "statusText": "DREAM SKIN ONLINE",
+  "quote": "MAKE SOMETHING WONDERFUL",
+  "image": "background.webp",
+  "appearance": "auto",
+  "art": {
+    "safeArea": "center",
+    "taskMode": "auto"
+  }
+}

@@ -122,10 +122,16 @@ export function classifyImageDimensions({ width, height }) {
 export function readImageMetadata(value, extension = "") {
   const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
   const normalized = extension.toLowerCase();
+  const isPng = bytes.length >= 8 && bytes[0] === 0x89 && ascii(bytes, 1, 3) === "PNG";
+  const isJpeg = bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xd8;
+  const isWebp = bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" &&
+    ascii(bytes, 8, 4) === "WEBP";
   let dimensions = null;
-  if (normalized === ".png" || bytes[0] === 0x89) dimensions = pngDimensions(bytes);
-  else if (normalized === ".jpg" || normalized === ".jpeg" ||
-    (bytes[0] === 0xff && bytes[1] === 0xd8)) dimensions = jpegDimensions(bytes);
-  else if (normalized === ".webp" || ascii(bytes, 8, 4) === "WEBP") dimensions = webpDimensions(bytes);
+  if (isPng) dimensions = pngDimensions(bytes);
+  else if (isJpeg) dimensions = jpegDimensions(bytes);
+  else if (isWebp) dimensions = webpDimensions(bytes);
+  else if (normalized === ".png") dimensions = pngDimensions(bytes);
+  else if (normalized === ".jpg" || normalized === ".jpeg") dimensions = jpegDimensions(bytes);
+  else if (normalized === ".webp") dimensions = webpDimensions(bytes);
   return dimensions ? classifyImageDimensions(dimensions) : null;
 }

@@ -9,6 +9,10 @@ const macosRoot = path.resolve(here, "..");
 const template = await fs.readFile(path.join(macosRoot, "assets", "renderer-inject.js"), "utf8");
 const css = await fs.readFile(path.join(macosRoot, "assets", "dream-skin.css"), "utf8");
 
+assert.match(template, /MIN_ENSURE_INTERVAL_MS = 200/, "Renderer reconciliation must be rate-limited under heavy DOM mutation.");
+assert.doesNotMatch(template, /attributeFilter:\s*\[[^\]]*"style"/, "Unrelated inline style churn must not trigger full skin reconciliation.");
+assert.match(template, /setInterval\(\(\) => ensure\([\s\S]{0,100}8000\)/, "Periodic recovery must use a low-frequency non-layout pass.");
+
 assert.doesNotMatch(
   css,
   /main\.main-surface\s*>\s*header\.app-header-tint\s*\{[^}]*\b(?:position|z-index)\s*:/,
@@ -129,6 +133,26 @@ assert.match(
   css,
   /\[class~="bg-token-main-surface-primary"\]\[class~="h-full"\]\[class~="w-full"\][\s\S]{0,100}background:\s*transparent !important;/,
   "Full-size utility route wrappers should not hide the selected artwork.",
+);
+assert.match(
+  template,
+  /document\.querySelector\("\.main-surface"\)/,
+  "The renderer must recognize settings surfaces rendered as div.main-surface.",
+);
+assert.match(
+  css,
+  /:has\(div\.main-surface\) div\.app-shell-left-panel[\s\S]{0,260}background:/,
+  "The settings sidebar must inherit the active skin.",
+);
+assert.match(
+  css,
+  /\[role="menuitem"\] > div:first-child > svg[\s\S]{0,260}position:\s*static !important;[\s\S]{0,260}align-self:\s*center !important;/,
+  "Profile menu icons must remain centered in their native rows.",
+);
+assert.match(
+  css,
+  /--color-token-dropdown-background:/,
+  "Portal menus and summary panels must inherit the active theme surface token.",
 );
 
 function createStyleDeclaration() {
@@ -376,7 +400,7 @@ assert.ok(defaults.resizeObservers[0].target);
 defaults.shellBox.left = 196;
 defaults.shellBox.width = 1084;
 defaults.resizeObservers[0].callback([]);
-defaults.flushTimers(64);
+defaults.flushTimers(200);
 assert.equal(defaultMetrics.layoutReads, 2, "Shell ResizeObserver changes must refresh chrome geometry.");
 const defaultChrome = defaults.nodes.get("codex-dream-skin-chrome");
 assert.equal(defaultChrome.style.values.get("left"), "196px");
@@ -401,10 +425,13 @@ shellFollow.setNativeShell("light");
 shellFollow.window.__CODEX_DREAM_SKIN_STATE__.ensure();
 assert.equal(shellFollow.attributes.get("data-dream-shell"), "light");
 
+defaults.root.className = "electron-light transient-layout-class";
+defaults.observers[1].callback([{ type: "attributes", target: defaults.root }]);
+assert.equal(defaults.timers.size, 0, "Unrelated root class churn must not schedule theme reconciliation.");
 defaults.root.className = "";
 defaults.body.setAttribute("data-theme", "dark");
 defaults.observers[1].callback([{ type: "attributes", target: defaults.body }]);
-defaults.flushTimers(64);
+defaults.flushTimers(200);
 assert.equal(defaults.attributes.get("data-dream-shell"), "dark", "Body theme changes must apply without the fallback interval.");
 
 const synchronousWide = createFixture({

@@ -6,8 +6,9 @@
 
 ## 内置实测预设
 
-当前内置 `preset-gothic-void-crusade/`（Gothic Void Crusade）与
-`preset-arina-hashimoto/`（桥本有菜 / Arina Hashimoto）两套实机验证主题。
+当前内置 `preset-gothic-void-crusade/`（Gothic Void Crusade）、
+`preset-arina-hashimoto/`（桥本有菜 / Arina Hashimoto）和
+`preset-001/`（001）三套主题。
 前者是社区作者提供的原创哥特科幻背景；后者使用一张
 `2560 × 1440`（16:9）纯背景：左侧低信息留白承载 Codex 原生标题，人物和花卉主视觉集中在右侧。浅色与暗色截图均来自真实 Codex 注入，不是 AI 绘制的整窗 UI。
 

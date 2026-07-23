@@ -32,6 +32,8 @@
   const installToken = {};
   let samplingNativeShell = false;
   let observer = null;
+  let rootObserver = null;
+  let analysisTimer = null;
   window.__CODEX_DREAM_SKIN_DISABLED__ = false;
 
   const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, Number(value)));
@@ -87,8 +89,10 @@
 
   const previous = window[STATE_KEY];
   if (previous?.observer) previous.observer.disconnect();
+  if (previous?.rootObserver) previous.rootObserver.disconnect();
   if (previous?.timer) clearInterval(previous.timer);
   if (previous?.scheduler?.timeout) clearTimeout(previous.scheduler.timeout);
+  if (previous?.analysisTimer) clearTimeout(previous.analysisTimer);
   if (previous?.artUrl) URL.revokeObjectURL(previous.artUrl);
   const artUrl = (() => {
     const comma = artDataUrl.indexOf(",");
@@ -109,12 +113,27 @@
     existingStyle.dataset.dreamVersion = "3";
   }
 
+  const setStyleProperty = (root, name, value) => {
+    if (root.style.getPropertyValue?.(name) !== value) root.style.setProperty(name, value);
+  };
+
   const analyzeArt = () => new Promise((resolve) => {
     if (typeof Image !== "function") {
       resolve(defaultProfile);
       return;
     }
     const image = new Image();
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      if (analysisTimer) clearTimeout(analysisTimer);
+      analysisTimer = null;
+      image.onload = null;
+      image.onerror = null;
+      resolve(value);
+    };
+    analysisTimer = setTimeout(() => finish(defaultProfile), 6000);
     image.onload = () => {
       try {
         const width = 48;
@@ -213,7 +232,7 @@
         let resolvedFocusX = clamp(focusX / focusWeight);
         if (safeArea === "left") resolvedFocusX = Math.max(.64, resolvedFocusX);
         if (safeArea === "right") resolvedFocusX = Math.min(.36, resolvedFocusX);
-        resolve({
+        finish({
           appearance: averageBrightness >= .58 ? "light" : "dark",
           accent: resolvedAccent,
           focusX: resolvedFocusX,
@@ -223,10 +242,10 @@
           safeArea,
         });
       } catch {
-        resolve(defaultProfile);
+        finish(defaultProfile);
       }
     };
-    image.onerror = () => resolve(defaultProfile);
+    image.onerror = () => finish(defaultProfile);
     image.src = artUrl;
   });
 
@@ -312,13 +331,13 @@
     for (const value of ["ambient", "banner", "off"]) {
       root.classList.toggle(`dream-task-${value}`, taskMode === value);
     }
-    root.style.setProperty("--dream-art", `url("${artUrl}")`);
-    root.style.setProperty("--dream-art-position", `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`);
-    root.style.setProperty("--dream-focus-x", String(focusX));
-    root.style.setProperty("--dream-focus-y", String(focusY));
-    root.style.setProperty("--dream-accent", accent);
-    root.style.setProperty("--dream-accent-ink", accentInk);
-    root.style.setProperty("--dream-image-luma", profile.luma.toFixed(3));
+    setStyleProperty(root, "--dream-art", `url("${artUrl}")`);
+    setStyleProperty(root, "--dream-art-position", `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`);
+    setStyleProperty(root, "--dream-focus-x", String(focusX));
+    setStyleProperty(root, "--dream-focus-y", String(focusY));
+    setStyleProperty(root, "--dream-accent", accent);
+    setStyleProperty(root, "--dream-accent-ink", accentInk);
+    setStyleProperty(root, "--dream-image-luma", profile.luma.toFixed(3));
   };
 
   const ensure = () => {
@@ -331,7 +350,7 @@
     // it, and clearing the skin there flashes native colors over the active theme.
     // True auxiliary windows (pets, blank targets) still have no main surface, so
     // they continue to clear residual skin state.
-    const shellMain = document.querySelector("main.main-surface") ||
+    const shellMain = document.querySelector(".main-surface") ||
       document.querySelector("main") ||
       document.querySelector('[role="main"]');
     if (!shellMain) {
@@ -354,11 +373,12 @@
     }
 
     const home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
+    const settingsShell = shellMain.matches?.("div.main-surface") ?? false;
     const mainCandidates = [...document.querySelectorAll('[role="main"]')];
     if (!mainCandidates.length) mainCandidates.push(shellMain);
     for (const candidate of mainCandidates) {
       candidate.classList.toggle("dream-home", candidate === home);
-      candidate.classList.toggle("dream-task", candidate !== home);
+      candidate.classList.toggle("dream-task", candidate !== home && !settingsShell);
     }
     const utilityBars = new Set(home ? home.querySelectorAll('[class*="_homeUtilityBar_"]') : []);
     for (const candidate of document.querySelectorAll(`.${HOME_UTILITY_CLASS}`)) {
@@ -384,20 +404,40 @@
     window.__CODEX_DREAM_SKIN_DISABLED__ = true;
     clearSkinDom();
     state?.observer?.disconnect();
+    state?.rootObserver?.disconnect();
     if (state?.timer) clearInterval(state.timer);
     if (state?.scheduler?.timeout) clearTimeout(state.scheduler.timeout);
+    if (state?.analysisTimer) clearTimeout(state.analysisTimer);
     if (state?.artUrl) URL.revokeObjectURL(state.artUrl);
     delete window[STATE_KEY];
     return true;
   };
 
-  const scheduler = { timeout: null };
+  const scheduler = { timeout: null, lastFlushAt: 0 };
+  const shellSignalSignature = () => {
+    const root = document.documentElement;
+    const body = document.body;
+    const classes = `${root?.className || ""} ${body?.className || ""}`
+      .toLowerCase()
+      .replace(/\bdream-theme-(?:dark|light)\b/g, "");
+    const classMode = /\b(dark|electron-dark|theme-dark|appearance-dark)\b/.test(classes) ? "dark"
+      : /\b(light|electron-light|theme-light|appearance-light)\b/.test(classes) ? "light" : "";
+    const attributes = [root, body].flatMap((node) => [
+      node?.getAttribute?.("data-theme") || "",
+      node?.getAttribute?.("data-appearance") || "",
+      node?.getAttribute?.("data-color-mode") || "",
+    ]);
+    return [classMode, ...attributes].join("|").toLowerCase();
+  };
+  let lastShellSignal = shellSignalSignature();
   const scheduleEnsure = () => {
-    if (scheduler.timeout) clearTimeout(scheduler.timeout);
+    if (scheduler.timeout) return;
+    const elapsed = Date.now() - scheduler.lastFlushAt;
     scheduler.timeout = setTimeout(() => {
       scheduler.timeout = null;
+      scheduler.lastFlushAt = Date.now();
       ensure();
-    }, 180);
+    }, Math.max(0, 200 - elapsed));
   };
   observer = new MutationObserver(() => {
     if (samplingNativeShell) return;
@@ -406,15 +446,32 @@
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
+  });
+  rootObserver = new MutationObserver(() => {
+    if (samplingNativeShell) return;
+    const nextShellSignal = shellSignalSignature();
+    if (nextShellSignal === lastShellSignal) return;
+    lastShellSignal = nextShellSignal;
+    scheduleEnsure();
+  });
+  rootObserver.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode"],
   });
-  const timer = setInterval(ensure, 5000);
+  if (document.body) {
+    rootObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode"],
+    });
+  }
+  const timer = setInterval(ensure, 8000);
   window[STATE_KEY] = {
-    ensure, cleanup, observer, timer, scheduler, artUrl, profile, config, installToken, version: "1.2.0",
+    ensure, cleanup, observer, rootObserver, timer, scheduler, analysisTimer, artUrl, profile, config, installToken, version: "1.2.0",
   };
   ensure();
-  analyzeArt().then((result) => {
+  const analysisPromise = analyzeArt();
+  window[STATE_KEY].analysisTimer = analysisTimer;
+  analysisPromise.then((result) => {
     const state = window[STATE_KEY];
     if (state?.installToken !== installToken || window.__CODEX_DREAM_SKIN_DISABLED__) return;
     profile = result;

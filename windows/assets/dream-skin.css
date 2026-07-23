@@ -26,6 +26,23 @@
   --dream-task-immersive-edge: color-mix(in oklab, var(--dream-surface) 86%, transparent);
   --dream-task-immersive-mid: color-mix(in oklab, var(--dream-surface) 78%, transparent);
   --dream-task-immersive-far: color-mix(in oklab, var(--dream-surface) 66%, transparent);
+  --color-token-main-surface-primary: var(--dream-canvas) !important;
+  --color-token-dropdown-background: color-mix(in oklab, var(--dream-surface-raised) 94%, transparent) !important;
+  --color-token-dropdown-foreground: var(--dream-text) !important;
+  --color-token-foreground: var(--dream-text) !important;
+  --color-token-text-primary: var(--dream-text) !important;
+  --color-token-text-secondary: color-mix(in oklab, var(--dream-text) 72%, transparent) !important;
+  --color-token-text-tertiary: var(--dream-text-muted) !important;
+  --color-token-description-foreground: var(--dream-text-muted) !important;
+  --color-token-input-foreground: var(--dream-text) !important;
+  --color-token-input-placeholder-foreground: var(--dream-text-muted) !important;
+  --color-token-icon-foreground: color-mix(in oklab, var(--dream-text) 88%, transparent) !important;
+  --color-token-border: var(--dream-line-soft) !important;
+  --color-token-border-default: var(--dream-line-soft) !important;
+  --color-token-border-heavy: var(--dream-line) !important;
+  --color-token-menu-border: var(--dream-line-soft) !important;
+  --color-token-list-hover-background: var(--dream-accent-soft) !important;
+  --color-token-list-active-selection-background: var(--dream-accent-hover) !important;
 }
 
 :root.codex-dream-skin.dream-theme-dark {
@@ -563,6 +580,68 @@ html.codex-dream-skin.dream-art-wide main.main-surface .app-shell-main-content-t
 html.codex-dream-skin.dream-art-wide main.main-surface
   .thread-scroll-container .bg-gradient-to-t.from-token-main-surface-primary {
   background: transparent !important;
+}
+
+/* Settings is rendered with div.main-surface/div.app-shell-left-panel, while
+   menus and the thread summary panel live in portals outside the task shell. */
+html.codex-dream-skin.dream-art-wide:has(div.main-surface) body {
+  background-image:
+    linear-gradient(90deg,
+      color-mix(in oklab, var(--dream-canvas) 76%, transparent),
+      color-mix(in oklab, var(--dream-canvas) 64%, transparent)),
+    var(--dream-art) !important;
+  background-position: center, var(--dream-art-position) !important;
+  background-size: 100% 100%, cover !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) div.app-shell-left-panel {
+  color: var(--dream-text) !important;
+  background: color-mix(in oklab, var(--dream-sidebar) 84%, transparent) !important;
+  border-right: 1px solid var(--dream-line-soft) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(10px) saturate(1.04) !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) div.main-surface {
+  color: var(--dream-text) !important;
+  background: color-mix(in oklab, var(--dream-canvas) 72%, transparent) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px) saturate(1.02) !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) div.main-surface
+  [class~="rounded-2xl"][class~="border-token-border"] {
+  background: color-mix(in oklab, var(--dream-surface-raised) 82%, transparent) !important;
+  border-color: var(--dream-line-soft) !important;
+  box-shadow: var(--dream-shadow) !important;
+}
+
+html.codex-dream-skin [role="menu"],
+html.codex-dream-skin [class~="bg-token-dropdown-background"],
+html.codex-dream-skin [class*="bg-token-dropdown-background/"] {
+  color: var(--dream-text) !important;
+  background-color: color-mix(in oklab, var(--dream-surface-raised) 92%, transparent) !important;
+  border-color: var(--dream-line-soft) !important;
+  box-shadow: var(--dream-shadow) !important;
+  backdrop-filter: blur(12px) saturate(1.06) !important;
+}
+
+html.codex-dream-skin [role="menuitem"] > div:first-child {
+  align-items: center !important;
+}
+
+html.codex-dream-skin [role="menuitem"] > div:first-child > svg {
+  position: static !important;
+  inset: auto !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
+  align-self: center !important;
+  transform: none !important;
 }
 
 @media (max-width: 1120px) {

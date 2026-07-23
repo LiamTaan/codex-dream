@@ -19,6 +19,35 @@ assert.doesNotMatch(
   /main\.main-surface\s*>\s*header\.app-header-tint\s*\{[^}]*\b(?:position|z-index)\s*:/,
   "The skin must preserve Codex's native fixed header so the side-panel toggle remains reachable.",
 );
+assert.match(
+  template,
+  /document\.querySelector\("\.main-surface"\)/,
+  "The renderer must recognize settings surfaces rendered as div.main-surface.",
+);
+assert.match(template, /let rootObserver = null/, "Root appearance observation must be isolated from subtree mutations.");
+assert.match(template, /observer\.observe\(document\.documentElement, \{\s*childList: true,\s*subtree: true,\s*\}\)/,
+  "Subtree observation must avoid watching every class/style attribute mutation.");
+assert.match(template, /const timer = setInterval\(ensure, 8000\)/,
+  "Periodic recovery must remain low frequency.");
+assert.match(template, /nextShellSignal === lastShellSignal/,
+  "Unrelated root attribute churn must not trigger full theme reconciliation.");
+assert.match(template, /image\.onload = null;[\s\S]{0,80}image\.onerror = null;/,
+  "Image analysis handlers must be released after completion.");
+assert.match(
+  css,
+  /:has\(div\.main-surface\) div\.app-shell-left-panel[\s\S]{0,260}background:/,
+  "The settings sidebar must inherit the active skin.",
+);
+assert.match(
+  css,
+  /\[role="menuitem"\] > div:first-child > svg[\s\S]{0,260}position:\s*static !important;[\s\S]{0,260}align-self:\s*center !important;/,
+  "Profile menu icons must remain centered in their native rows.",
+);
+assert.match(
+  css,
+  /--color-token-dropdown-background:/,
+  "Portal menus and summary panels must inherit the active theme surface token.",
+);
 
 function createFixture({
   shellPresent,
