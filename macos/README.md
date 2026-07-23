@@ -74,7 +74,7 @@ CDP is powerful and unauthenticated on loopback. Prefer Restore when you are don
 
 ## Bundled presets
 
-A fresh install seeds two tested presets into your theme library:
+A fresh install seeds three presets into your theme library:
 **Gothic Void Crusade** and **桥本有菜 / Arina Hashimoto**. Gothic Void Crusade
 is the default when no active theme exists. Switch to Arina Hashimoto with:
 

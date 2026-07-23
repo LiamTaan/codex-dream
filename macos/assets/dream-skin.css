@@ -55,6 +55,23 @@
   --ds-task-immersive-edge: rgb(var(--ds-bg-rgb) / .82);
   --ds-task-immersive-mid: rgb(var(--ds-bg-rgb) / .74);
   --ds-task-immersive-far: rgb(var(--ds-bg-rgb) / .60);
+  --color-token-main-surface-primary: rgb(var(--ds-bg-rgb) / 1) !important;
+  --color-token-dropdown-background: rgb(var(--ds-panel-2-rgb) / .94) !important;
+  --color-token-dropdown-foreground: var(--ds-text) !important;
+  --color-token-foreground: var(--ds-text) !important;
+  --color-token-text-primary: var(--ds-text) !important;
+  --color-token-text-secondary: rgb(var(--ds-text-rgb) / .72) !important;
+  --color-token-text-tertiary: rgb(var(--ds-muted-rgb) / .82) !important;
+  --color-token-description-foreground: rgb(var(--ds-muted-rgb) / .82) !important;
+  --color-token-input-foreground: var(--ds-text) !important;
+  --color-token-input-placeholder-foreground: rgb(var(--ds-muted-rgb) / .82) !important;
+  --color-token-icon-foreground: rgb(var(--ds-text-rgb) / .88) !important;
+  --color-token-border: var(--ds-line) !important;
+  --color-token-border-default: var(--ds-line) !important;
+  --color-token-border-heavy: rgb(var(--ds-muted-rgb) / .28) !important;
+  --color-token-menu-border: var(--ds-line) !important;
+  --color-token-list-hover-background: rgb(var(--ds-accent-rgb) / .10) !important;
+  --color-token-list-active-selection-background: rgb(var(--ds-accent-rgb) / .14) !important;
 }
 
 html.codex-dream-skin[data-dream-shell="light"] {
@@ -1038,6 +1055,76 @@ html.codex-dream-skin button[class~="bg-token-foreground"] {
   background: var(--ds-accent) !important;
   color: var(--ds-on-accent) !important;
   box-shadow: 0 5px 14px rgb(var(--ds-accent-rgb) / .20) !important;
+}
+
+/* Settings uses div.main-surface/div.app-shell-left-panel rather than the
+   main/aside elements used by the task shell. Keep the wallpaper continuous
+   while preserving a quiet, readable settings workspace. */
+html.codex-dream-skin[data-dream-art-wide="true"]:has(div.main-surface) body {
+  background-image:
+    linear-gradient(90deg,
+      rgb(var(--ds-bg-rgb) / .76),
+      rgb(var(--ds-bg-rgb) / .64)),
+    var(--dream-skin-art) !important;
+  background-position: center, var(--ds-art-position) !important;
+  background-size: 100% 100%, cover !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) div.app-shell-left-panel {
+  color: var(--ds-text) !important;
+  background: linear-gradient(180deg,
+    rgb(var(--ds-panel-rgb) / .86),
+    rgb(var(--ds-bg-rgb) / .82)) !important;
+  border-right: 1px solid var(--ds-line) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(10px) saturate(104%) !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) div.main-surface {
+  color: var(--ds-text) !important;
+  background: rgb(var(--ds-bg-rgb) / .72) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px) saturate(102%) !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) div.main-surface
+  [class~="rounded-2xl"][class~="border-token-border"] {
+  background: rgb(var(--ds-panel-rgb) / .82) !important;
+  border-color: var(--ds-line) !important;
+  box-shadow: 0 8px 24px rgb(var(--ds-bg-rgb) / .12) !important;
+}
+
+html.codex-dream-skin:has(div.main-surface) #codex-dream-skin-chrome {
+  display: none !important;
+}
+
+/* Radix menus and thread summary panels are portals outside main.main-surface. */
+html.codex-dream-skin [role="menu"],
+html.codex-dream-skin [class~="bg-token-dropdown-background"],
+html.codex-dream-skin [class*="bg-token-dropdown-background/"] {
+  color: var(--ds-text) !important;
+  background-color: rgb(var(--ds-panel-2-rgb) / .92) !important;
+  border-color: var(--ds-line) !important;
+  box-shadow: 0 12px 30px rgb(var(--ds-bg-rgb) / .24) !important;
+  backdrop-filter: blur(12px) saturate(106%) !important;
+}
+
+html.codex-dream-skin [role="menuitem"] > div:first-child {
+  align-items: center !important;
+}
+
+html.codex-dream-skin [role="menuitem"] > div:first-child > svg {
+  position: static !important;
+  inset: auto !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
+  align-self: center !important;
+  transform: none !important;
 }
 
 html.codex-dream-skin article,

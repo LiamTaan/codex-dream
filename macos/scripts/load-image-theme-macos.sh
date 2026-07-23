@@ -8,6 +8,7 @@ set -euo pipefail
 
 IMAGE=""
 THEME_NAME=""
+THEME_GROUP=""
 FROM_LIBRARY=""
 APPLY_NOW="true"
 APPEARANCE="auto"
@@ -21,6 +22,7 @@ while [ "$#" -gt 0 ]; do
     --file) IMAGE="${2:-}"; shift 2 ;;
     --from-library) FROM_LIBRARY="${2:-}"; shift 2 ;;
     --name) THEME_NAME="${2:-}"; shift 2 ;;
+    --group) THEME_GROUP="${2:-}"; shift 2 ;;
     --appearance) APPEARANCE="${2:-}"; shift 2 ;;
     --safe-area) SAFE_AREA="${2:-}"; shift 2 ;;
     --task-mode) TASK_MODE="${2:-}"; shift 2 ;;
@@ -115,6 +117,7 @@ theme_args=(
 )
 [ -n "$FOCUS_X" ] && theme_args+=(--focus-x "$FOCUS_X")
 [ -n "$FOCUS_Y" ] && theme_args+=(--focus-y "$FOCUS_Y")
+[ -n "$THEME_GROUP" ] && theme_args+=(--group "$THEME_GROUP")
 "$NODE" "$SCRIPT_DIR/write-theme.mjs" "${theme_args[@]}" >/dev/null
 /usr/bin/find "$THEME_DIR" -maxdepth 1 -type f -name 'background.*' ! -name "$image_name" -delete
 trap - EXIT
@@ -154,5 +157,4 @@ if "$SCRIPT_DIR/start-dream-skin-macos.sh" --port "$PORT" --restart-existing; th
   exit 0
 fi
 
-alert_user "Image saved but inject failed. Click Apply Skin."
-exit 1
+fail "主题图片已保存，但 Codex 注入失败。请打开运行诊断查看 injector-error.log。"

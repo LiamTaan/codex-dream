@@ -55,5 +55,10 @@ assert.equal(readImageMetadata(oversizedPngHeader, ".png"), null);
 const malformedJpeg = Buffer.from(featured.subarray(0, 64));
 malformedJpeg[0] = 0;
 assert.equal(readImageMetadata(malformedJpeg, ".jpg"), null);
+assert.deepEqual(
+  readImageMetadata(featured, ".webp"),
+  readImageMetadata(featured, ".jpg"),
+  "Image signatures must win when an imported file has a misleading extension.",
+);
 
 console.log("PASS: Windows injector reads strict image dimensions before building the payload.");

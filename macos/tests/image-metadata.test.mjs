@@ -84,6 +84,11 @@ assert.deepEqual(readImageMetadata(vp8l, ".webp"), {
   aspect: "wide",
   taskMode: "ambient",
 });
+assert.deepEqual(
+  readImageMetadata(vp8l, ".jpg"),
+  readImageMetadata(vp8l, ".webp"),
+  "Image signatures must win when an imported file has a misleading extension.",
+);
 
 const vp8x = new Uint8Array(30);
 writeAscii(vp8x, 0, "RIFF");

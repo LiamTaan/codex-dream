@@ -351,8 +351,8 @@ async function listAppTargets(port) {
 async function probeSession(session) {
   return session.evaluate(`(() => {
     const markers = {
-      shell: Boolean(document.querySelector('main.main-surface')),
-      sidebar: Boolean(document.querySelector('aside.app-shell-left-panel')),
+      shell: Boolean(document.querySelector('.main-surface')),
+      sidebar: Boolean(document.querySelector('.app-shell-left-panel')),
       composer: Boolean(document.querySelector('.composer-surface-chrome')),
       main: Boolean(document.querySelector('[role="main"]')),
     };
@@ -605,8 +605,10 @@ async function loadPayload(themeDir) {
   const artKey = createHash("sha256").update(art).digest("hex").slice(0, 20);
   theme.artMetadata = artMetadata;
   theme.artKey = artKey;
-  const mime = extension === ".jpg" || extension === ".jpeg" ? "image/jpeg"
-    : extension === ".webp" ? "image/webp" : "image/png";
+  const mime = art[0] === 0xff && art[1] === 0xd8 ? "image/jpeg"
+    : art.subarray(0, 4).toString("ascii") === "RIFF" &&
+      art.subarray(8, 12).toString("ascii") === "WEBP" ? "image/webp"
+      : "image/png";
   const artDataUrl = `data:${mime};base64,${art.toString("base64")}`;
   const revision = createHash("sha256")
     .update(SKIN_VERSION)
@@ -656,7 +658,7 @@ function operationUiExpression(action, token, state = "loading", message = "") {
       : value === "success" ? 1800 : value === "cancelled" ? 2400 : 6000;
     const issuedAt = (value) => Number(String(value).split(":")[1]) || 0;
     const positionInMainArea = (host) => {
-      const main = document.querySelector("main.main-surface") ||
+      const main = document.querySelector(".main-surface") ||
         document.querySelector('[role="main"]') || document.documentElement;
       const rect = main.getBoundingClientRect();
       const top = Math.max(0, rect.top);
@@ -861,9 +863,9 @@ async function verifySession(session, expectedThemeId = null, expectedRevision =
       item.color === item.expectedColor);
     const hero = box(home?.firstElementChild?.firstElementChild?.firstElementChild);
     const projectButton = box(home?.querySelector('.group\\\\/project-selector > button'));
-    const shell = box(document.querySelector('main.main-surface'));
+    const shell = box(document.querySelector('.main-surface'));
     const composer = box(document.querySelector('.composer-surface-chrome'));
-    const sidebar = box(document.querySelector('aside.app-shell-left-panel'));
+    const sidebar = box(document.querySelector('.app-shell-left-panel'));
     const chrome = document.getElementById('codex-dream-skin-chrome');
     const result = {
       installed: document.documentElement.classList.contains('codex-dream-skin'),
@@ -1117,8 +1119,8 @@ export function earlyPayloadFor(payload, revision) {
     const install = () => {
       if (window[generationKey] !== generation) { stop(); return true; }
       if (!document.documentElement) return false;
-      const shell = document.querySelector('main.main-surface');
-      const sidebar = document.querySelector('aside.app-shell-left-panel');
+      const shell = document.querySelector('.main-surface');
+      const sidebar = document.querySelector('.app-shell-left-panel');
       if (!shell || !sidebar) return false;
       stop();
       ${payload};
@@ -1598,6 +1600,9 @@ async function runWatch(options) {
       }
 
       const activeIds = new Set(targets.map((target) => target.id));
+      for (const id of rejected) {
+        if (!activeIds.has(id)) rejected.delete(id);
+      }
       for (const [id, record] of sessions) {
         if (!activeIds.has(id) || record.session.closed) {
           if (!record.session.closed && record.operationToken && !record.operationExternal) {

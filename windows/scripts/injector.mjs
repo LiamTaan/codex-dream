@@ -516,8 +516,11 @@ async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme 
     fs.readFile(path.join(root, "assets", "renderer-inject.js"), "utf8"),
   ]);
   const extension = path.extname(loadedTheme.imagePath).toLowerCase();
-  const mime = extension === ".jpg" || extension === ".jpeg" ? "image/jpeg"
-    : extension === ".webp" ? "image/webp" : "image/png";
+  const imageBytes = loadedTheme.imageBytes;
+  const mime = imageBytes[0] === 0xff && imageBytes[1] === 0xd8 ? "image/jpeg"
+    : imageBytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+      imageBytes.subarray(8, 12).toString("ascii") === "WEBP" ? "image/webp"
+      : "image/png";
   const artDataUrl = `data:${mime};base64,${loadedTheme.imageBytes.toString("base64")}`;
   const payload = template
     .replace("__DREAM_CSS_JSON__", JSON.stringify(css))
@@ -548,14 +551,16 @@ async function readThemeSourceStamp(loadedTheme) {
 async function probeSession(session) {
   return session.evaluate(`(() => {
     const markers = {
-      shell: Boolean(document.querySelector('main.main-surface')),
-      sidebar: Boolean(document.querySelector('aside.app-shell-left-panel')),
+      shell: Boolean(document.querySelector('.main-surface')),
+      sidebar: Boolean(document.querySelector('.app-shell-left-panel')),
       composer: Boolean(document.querySelector('.composer-surface-chrome')),
       main: Boolean(document.querySelector('[role="main"]')),
+      settings: Boolean(document.querySelector('div.main-surface')),
     };
     return {
       markers,
-      codex: location.protocol === 'app:' && markers.shell && markers.sidebar && (markers.composer || markers.main),
+      codex: location.protocol === 'app:' && markers.shell && markers.sidebar &&
+        (markers.composer || markers.main || markers.settings),
     };
   })()`);
 }
@@ -631,8 +636,8 @@ export function earlyPayloadFor(payload, revision) {
       if (window[generationKey] !== generation) { stop(); return true; }
       const root = document.documentElement;
       if (!root || !document.body) return false;
-      const shell = document.querySelector('main.main-surface');
-      const sidebar = document.querySelector('aside.app-shell-left-panel');
+      const shell = document.querySelector('.main-surface');
+      const sidebar = document.querySelector('.app-shell-left-panel');
       if (!shell || !sidebar) return false;
       stop();
       ${payload};
@@ -685,7 +690,7 @@ function operationUiExpression(action, token, state = "loading", message = "") {
       : value === "success" ? 1800 : value === "cancelled" ? 2400 : 6000;
     const issuedAt = (value) => Number(String(value).split(":")[1]) || 0;
     const positionInMainArea = (host) => {
-      const main = document.querySelector("main.main-surface") ||
+      const main = document.querySelector(".main-surface") ||
         document.querySelector("main") ||
         document.querySelector('[role="main"]') || document.documentElement;
       const rect = main.getBoundingClientRect();
@@ -891,7 +896,8 @@ async function verifySession(session) {
       hero: box(home?.firstElementChild?.firstElementChild?.firstElementChild),
       cards,
       composer: box(document.querySelector('.composer-surface-chrome')),
-      sidebar: box(document.querySelector('aside.app-shell-left-panel')),
+      sidebar: box(document.querySelector('.app-shell-left-panel')),
+      settings: Boolean(document.querySelector('div.main-surface')),
       viewport: { width: innerWidth, height: innerHeight },
       documentOverflow: {
         x: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -900,7 +906,8 @@ async function verifySession(session) {
     };
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.chromePresent &&
-      result.chromePointerEvents === 'none' && Boolean(result.composer) && Boolean(result.sidebar) &&
+      result.chromePointerEvents === 'none' && Boolean(result.sidebar) &&
+      (Boolean(result.composer) || result.settings) &&
       (!result.homePresent || (Boolean(result.hero) &&
         (!result.suggestionsPresent || (result.cards.length >= 2 && result.cards.length <= 4))));
     return result;

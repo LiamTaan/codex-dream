@@ -17,6 +17,7 @@
   const ART_METADATA = THEME.artMetadata && typeof THEME.artMetadata === "object"
     ? THEME.artMetadata : null;
   const ANALYSIS_CACHE_KEY = "__CODEX_DREAM_SKIN_ANALYSIS_CACHE__";
+  const MIN_ENSURE_INTERVAL_MS = 200;
   const THEME_VARIABLES = [
     "--ds-bg", "--ds-panel", "--ds-panel-2", "--ds-green", "--ds-lime",
     "--ds-cyan", "--ds-purple", "--ds-text", "--ds-muted", "--ds-line",
@@ -394,6 +395,8 @@
       settled = true;
       if (analysisTimer) clearTimeout(analysisTimer);
       analysisTimer = null;
+      image.onload = null;
+      image.onerror = null;
       metrics.analysisMs = Number((now() - startedAt).toFixed(3));
       resolve(value);
     };
@@ -561,7 +564,7 @@
     const root = document.documentElement;
     if (!root) return;
     shell ||= root.getAttribute(SHELL_ATTR) || resolvedShell();
-    const shellMain = document.querySelector("main.main-surface") || document.querySelector("main");
+    const shellMain = document.querySelector(".main-surface") || document.querySelector("main");
     const homeIndicator = document.querySelector('[data-testid="home-icon"]');
     const home = homeIndicator?.closest('[role="main"]') ||
       [...document.querySelectorAll('[role="main"]')].find((candidate) =>
@@ -676,7 +679,21 @@
     return true;
   };
 
-  const scheduler = { timeout: null, frame: null, root: false, route: false, layout: false };
+  const scheduler = { timeout: null, frame: null, root: false, route: false, layout: false, lastFlushAt: 0 };
+  const shellSignalSignature = () => {
+    const root = document.documentElement;
+    const body = document.body;
+    const classes = `${root?.className || ""} ${body?.className || ""}`.toLowerCase();
+    const classMode = /\b(dark|theme-dark|appearance-dark)\b/.test(classes) ? "dark"
+      : /\b(light|theme-light|appearance-light)\b/.test(classes) ? "light" : "";
+    const attributes = [root, body].flatMap((node) => [
+      node?.getAttribute?.("data-theme") || "",
+      node?.getAttribute?.("data-appearance") || "",
+      node?.getAttribute?.("data-color-mode") || "",
+    ]);
+    return [classMode, ...attributes].join("|").toLowerCase();
+  };
+  let lastShellSignal = shellSignalSignature();
   const flushScheduledEnsure = () => {
     if (scheduler.frame !== null && typeof cancelAnimationFrame === "function") {
       cancelAnimationFrame(scheduler.frame);
@@ -684,6 +701,7 @@
     if (scheduler.timeout) clearTimeout(scheduler.timeout);
     scheduler.frame = null;
     scheduler.timeout = null;
+    scheduler.lastFlushAt = now();
     const pending = { root: scheduler.root, route: scheduler.route, layout: scheduler.layout };
     scheduler.root = false;
     scheduler.route = false;
@@ -695,16 +713,15 @@
     scheduler.route ||= route;
     scheduler.layout ||= layout;
     if (scheduler.timeout || scheduler.frame !== null) return;
-    if (typeof requestAnimationFrame === "function") {
-      scheduler.frame = requestAnimationFrame(flushScheduledEnsure);
-      scheduler.timeout = setTimeout(flushScheduledEnsure, 96);
-    } else {
-      scheduler.timeout = setTimeout(flushScheduledEnsure, 64);
-    }
+    const elapsed = now() - scheduler.lastFlushAt;
+    scheduler.timeout = setTimeout(flushScheduledEnsure, Math.max(0, MIN_ENSURE_INTERVAL_MS - elapsed));
   };
   const observer = new MutationObserver(() => scheduleEnsure({ route: true }));
   rootObserver = new MutationObserver(() => {
     if (samplingNativeShell) return;
+    const nextShellSignal = shellSignalSignature();
+    if (nextShellSignal === lastShellSignal) return;
+    lastShellSignal = nextShellSignal;
     scheduleEnsure({ root: true, route: true });
   });
   const resizeHandler = () => scheduleEnsure({ route: true, layout: true });
@@ -751,15 +768,15 @@
   });
   rootObserver.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode", "style"],
+    attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode"],
   });
   if (document.body) {
     rootObserver.observe(document.body, {
       attributes: true,
-      attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode", "style"],
+      attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode"],
     });
   }
-  const timer = setInterval(() => ensure(), 4000);
+  const timer = setInterval(() => ensure({ root: true, route: true, layout: false }), 8000);
   window[STATE_KEY].timer = timer;
   window.addEventListener("resize", resizeHandler, { passive: true });
   if (mediaHandler && mediaQuery) {

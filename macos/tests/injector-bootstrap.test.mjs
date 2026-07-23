@@ -19,8 +19,8 @@ function createFixture() {
     document: {
       documentElement: {},
       querySelector(selector) {
-        if (selector === "main.main-surface") return markers.shell ? {} : null;
-        if (selector === "aside.app-shell-left-panel") return markers.sidebar ? {} : null;
+        if (selector === ".main-surface" || selector === "main.main-surface") return markers.shell ? {} : null;
+        if (selector === ".app-shell-left-panel" || selector === "aside.app-shell-left-panel") return markers.sidebar ? {} : null;
         return null;
       },
     },
@@ -80,6 +80,11 @@ assert.match(
   source,
   /const suggestionLabelColorsMatch = visibleSuggestionLabels\.every\([\s\S]{0,2500}visibleSuggestionLabels\.length >= result\.visibleCardCount[\s\S]{0,160}result\.suggestionLabelColorsMatch/,
   "Live verification must reject visible home suggestion labels that diverge from the themed card color.",
+);
+assert.match(
+  source,
+  /for \(const id of rejected\) \{\s*if \(!activeIds\.has\(id\)\) rejected\.delete\(id\);\s*\}/,
+  "Rejected target IDs must be pruned after targets leave so the watcher cannot grow indefinitely.",
 );
 
 console.log("PASS: early injection is shell-guarded, generation-safe, and removed on shutdown.");

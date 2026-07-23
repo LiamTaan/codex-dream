@@ -3,28 +3,188 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' file: data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; connect-src 'none'" />
     <title>Codex Dream Skin</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="topbar">
-        <div class="brand-lockup"><div class="brand-mark" aria-hidden="true">✦</div><div><div class="eyebrow">CODEX DREAM SKIN</div><h1>把工作台换成你喜欢的氛围</h1></div></div>
-        <button class="ghost-button" id="open-state">打开运行目录</button>
-      </header>
-      <section class="hero-grid">
-        <div class="hero-panel">
-          <div class="status-row"><span class="status-dot" id="status-dot"></span><span id="status-label">正在检查运行状态…</span><span class="platform-pill" id="platform-label">—</span></div>
-          <h2 id="active-theme">准备好为 Codex 换一张脸了吗？</h2>
-          <p id="status-message">桌面面板会调用当前平台的官方换肤运行时，不修改 Codex 安装文件。</p>
-          <div class="action-row"><button class="primary-button" data-action="start">应用皮肤</button><button class="secondary-button" data-action="pause">暂停显示</button><button class="secondary-button" data-action="restore">恢复官方外观</button></div>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand-lockup">
+          <img class="brand-mark" src="../assets/icon.png" alt="" />
+          <div><strong>Codex Dream Skin</strong><span>桌面主题管理器</span></div>
         </div>
-        <aside class="quick-panel"><div class="section-kicker">QUICK ACTIONS</div><button class="quick-action" data-action="customize"><span>＋</span><div><strong>导入一张背景图</strong><small>使用你的图片创建主题</small></div></button><button class="quick-action" id="refresh"><span>↻</span><div><strong>刷新运行状态</strong><small>重新读取当前平台状态</small></div></button><div class="runtime-note">安全边界：本机回环 CDP · 不改官方安装包</div></aside>
-      </section>
-      <section class="library-section"><div class="section-heading"><div><div class="section-kicker">THEME LIBRARY</div><h3>精选主题</h3></div><span id="theme-count">—</span></div><div class="theme-grid" id="theme-grid"></div></section>
-      <footer class="footer"><span>Codex Dream Skin · Personal desktop edition</span><span id="last-updated">—</span></footer>
-    </main>
+
+        <nav class="main-nav">
+          <button class="nav-item active" type="button" data-view-target="overview" aria-current="page"><i data-lucide="layout-dashboard"></i><span>总览</span></button>
+          <button class="nav-item" type="button" data-view-target="library"><i data-lucide="images"></i><span>主题库</span></button>
+          <button class="nav-item" type="button" data-view-target="studio"><i data-lucide="panel-top"></i><span>主题工作室</span></button>
+          <button class="nav-item" type="button" data-view-target="diagnostics"><i data-lucide="stethoscope"></i><span>运行诊断</span></button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="platform-summary"><span class="status-indicator pending" id="sidebar-status-icon"><i data-lucide="loader-circle"></i></span><div><strong id="sidebar-status">正在检测</strong><span id="sidebar-platform">—</span></div></div>
+          <div class="version-row"><span id="app-version">版本检测中…</span><span id="build-channel">开发版</span></div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <section class="view active" data-view="overview" aria-labelledby="overview-title">
+          <header class="page-header">
+            <div><span class="section-kicker">OVERVIEW</span><h1 id="overview-title">总览</h1><p>查看 Codex、当前主题与换肤运行时的真实状态。</p></div>
+            <button class="icon-button" type="button" data-refresh title="重新检查"><i data-lucide="refresh-cw"></i><span class="sr-only">重新检查</span></button>
+          </header>
+
+          <div class="status-banner pending" id="overview-banner" role="status">
+            <span class="status-indicator pending" id="overview-status-icon"><i data-lucide="loader-circle"></i></span>
+            <div><strong id="overview-status-title">正在检查本机环境</strong><p id="overview-status-message">读取运行时与 Codex 状态。</p></div>
+            <span class="platform-badge" id="overview-platform">—</span>
+          </div>
+
+          <div class="overview-grid">
+            <section class="theme-stage" aria-labelledby="current-theme-heading">
+              <div class="stage-heading"><div><span class="section-kicker">CURRENT THEME</span><h2 id="current-theme-heading">当前主题</h2></div><span class="state-label" id="current-theme-state"><i data-lucide="circle-dashed"></i>未检测</span></div>
+              <div class="hero-preview empty" id="current-theme-preview">
+                <img id="current-theme-image" alt="当前主题预览" hidden />
+                <div class="preview-empty" id="current-theme-empty"><i data-lucide="image-off"></i><strong>尚未应用主题</strong><span>从主题库选择主题，或在工作室创建一套。</span></div>
+              </div>
+              <div class="current-theme-meta"><div><strong id="current-theme-name">未选择主题</strong><span id="current-theme-source">等待运行时检测</span></div><button class="secondary-button" type="button" data-go-view="library"><i data-lucide="images"></i>浏览主题库</button></div>
+            </section>
+
+            <aside class="command-panel" aria-labelledby="quick-actions-title">
+              <div><span class="section-kicker">ACTIONS</span><h2 id="quick-actions-title">主题控制</h2></div>
+              <button class="primary-button command-button" data-action="start" type="button"><i data-lucide="play"></i><span><strong>应用皮肤</strong><small>启动或刷新当前主题</small></span></button>
+              <button class="secondary-button command-button" data-action="pause" type="button"><i data-lucide="pause"></i><span><strong>暂停显示</strong><small>保留配置并移除当前视觉</small></span></button>
+              <button class="secondary-button command-button" data-action="restore" type="button"><i data-lucide="rotate-ccw"></i><span><strong>恢复官方外观</strong><small>恢复原始界面并关闭会话</small></span></button>
+            </aside>
+          </div>
+
+          <section class="facts-section" aria-labelledby="environment-heading">
+            <div class="section-heading"><div><span class="section-kicker">ENVIRONMENT</span><h2 id="environment-heading">运行环境</h2></div><span class="updated-at" id="last-updated">尚未刷新</span></div>
+            <dl class="fact-grid">
+              <div><dt>Codex 状态</dt><dd id="codex-value">检测中…</dd><span id="codex-detail">动态检测</span></div>
+              <div><dt>运行时会话</dt><dd id="session-value">检测中…</dd><span id="runtime-version">动态检测</span></div>
+              <div><dt>CDP 端口</dt><dd id="port-value">检测中…</dd><span>本机回环 · 动态检测</span></div>
+            </dl>
+          </section>
+        </section>
+
+        <section class="view" data-view="library" aria-labelledby="library-title" hidden>
+          <header class="page-header">
+            <div><span class="section-kicker">THEME LIBRARY</span><h1 id="library-title">主题库</h1><p>管理内置主题和你从本地图片创建的主题。</p></div>
+            <button class="primary-button" type="button" data-go-view="studio"><i data-lucide="plus"></i>创建主题</button>
+          </header>
+
+          <div class="library-toolbar">
+            <div class="segmented-control" role="tablist" aria-label="主题筛选">
+              <button class="segment active" type="button" role="tab" aria-selected="true" data-filter="all">全部</button>
+              <button class="segment" type="button" role="tab" aria-selected="false" data-filter="preset">内置</button>
+              <button class="segment" type="button" role="tab" aria-selected="false" data-filter="custom">我的主题</button>
+            </div>
+            <label class="search-field"><i data-lucide="search"></i><span class="sr-only">搜索主题</span><input id="theme-search" type="search" placeholder="搜索主题" /></label>
+            <label class="group-filter"><span class="sr-only">筛选分组</span><select id="theme-group-filter"><option value="all">全部分组</option></select></label>
+            <span class="result-count" id="theme-count">0 套主题</span>
+          </div>
+
+          <div class="library-layout">
+            <div class="theme-group-list" id="theme-grid" aria-live="polite"></div>
+            <aside class="theme-details empty" id="theme-details" aria-labelledby="theme-detail-title">
+              <div class="detail-empty" id="detail-empty"><i data-lucide="mouse-pointer-click"></i><strong>选择一套主题</strong><span>查看主题信息和应用状态。</span></div>
+              <div id="detail-content" hidden>
+                <div class="detail-preview"><img id="detail-image" alt="" /></div>
+                <div class="detail-heading"><div><span class="state-label" id="detail-state"></span><h2 id="theme-detail-title"></h2></div></div>
+                <p class="detail-description" id="detail-description"></p>
+                <dl class="detail-facts"><div><dt>来源</dt><dd id="detail-source"></dd></div><div><dt>分组</dt><dd id="detail-group"></dd></div><div><dt>界面适配</dt><dd id="detail-appearance"></dd></div><div><dt>内容安全区</dt><dd id="detail-safe-area"></dd></div><div><dt>任务页显示</dt><dd id="detail-task-mode"></dd></div></dl>
+                <div class="detail-actions">
+                  <button class="primary-button full-width" id="apply-selected-theme" type="button"><i data-lucide="check"></i>应用这套主题</button>
+                  <button class="secondary-button full-width" id="edit-selected-theme" type="button" hidden><i data-lucide="pencil"></i>编辑名称与分组</button>
+                  <button class="danger-button full-width" id="delete-selected-theme" type="button" hidden><i data-lucide="trash-2"></i>删除这套主题</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view="studio" aria-labelledby="studio-title" hidden>
+          <header class="page-header">
+            <div><span class="section-kicker">THEME STUDIO</span><h1 id="studio-title">主题工作室</h1><p>从本地图片创建主题，选图后再预览安全区与显示方式。</p></div>
+            <span class="save-state" id="studio-save-state"><i data-lucide="circle"></i>尚未选择图片</span>
+          </header>
+
+          <div class="studio-layout">
+            <section class="studio-canvas" aria-label="主题预览">
+              <div class="studio-empty" id="studio-empty"><i data-lucide="image-plus"></i><h2>选择背景图</h2><p>支持 PNG、JPEG、WebP、HEIC 和 TIFF。</p><button class="primary-button" id="pick-studio-image" type="button"><i data-lucide="folder-open"></i>选择背景图</button></div>
+              <div class="studio-preview" id="studio-preview" hidden>
+                <img id="studio-image" alt="主题背景预览" />
+                <span class="focus-marker" id="focus-marker" aria-hidden="true"></span>
+                <div class="safe-area-overlay" id="safe-area-overlay" hidden><span>内容安全区</span></div>
+                <div class="preview-chrome"><span><i data-lucide="panel-left"></i>Codex</span><span>项目工作区</span></div>
+              </div>
+              <div class="canvas-toolbar" id="canvas-toolbar" hidden><button class="secondary-button" id="replace-studio-image" type="button"><i data-lucide="replace"></i>更换图片</button><label class="toggle-control"><input id="guides-toggle" type="checkbox" checked /><span></span>显示辅助线</label></div>
+            </section>
+
+            <aside class="studio-inspector" aria-labelledby="inspector-title">
+              <div><span class="section-kicker">SETTINGS</span><h2 id="inspector-title">主题设置</h2></div>
+              <label class="field"><span>主题名称（默认取图片名）</span><input id="theme-name" maxlength="80" placeholder="选择图片后自动填充" disabled /></label>
+              <label class="field"><span>分组</span><input id="theme-group" maxlength="40" list="theme-group-options" placeholder="例如：人物、风景、工作" disabled /></label>
+              <label class="field"><span>界面适配</span><select id="theme-appearance" disabled><option value="auto">跟随 Codex</option><option value="dark">深色</option><option value="light">浅色</option></select></label>
+              <label class="field"><span>内容安全区</span><select id="theme-safe-area" disabled><option value="auto">自动</option><option value="left">左侧</option><option value="right">右侧</option><option value="center">居中</option><option value="none">无</option></select></label>
+              <fieldset class="focus-fields" disabled>
+                <legend>图片焦点位置</legend>
+                <label class="range-field"><span>X <output id="focus-x-value">50%</output></span><input id="theme-focus-x" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+                <label class="range-field"><span>Y <output id="focus-y-value">50%</output></span><input id="theme-focus-y" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+                <small>拖动预览中的焦点，或调整滑块。</small>
+              </fieldset>
+              <label class="field"><span>任务页显示</span><select id="theme-task-mode" disabled><option value="auto">自动</option><option value="ambient">弱化背景</option><option value="banner">顶部横幅</option><option value="off">任务页关闭</option></select></label>
+              <div class="inspector-note"><i data-lucide="shield-check"></i><p>图片会复制到受管主题目录；不会修改 Codex 官方安装包。</p></div>
+              <button class="primary-button full-width" id="create-theme" type="button" disabled><i data-lucide="sparkles"></i>创建并应用主题</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view="diagnostics" aria-labelledby="diagnostics-title" hidden>
+          <header class="page-header">
+            <div><span class="section-kicker">RUNTIME DIAGNOSTICS</span><h1 id="diagnostics-title">运行诊断</h1><p>检查 Codex、配置、CDP、Node 运行时和活动主题资源。</p></div>
+            <button class="primary-button" type="button" data-refresh-diagnostics><i data-lucide="refresh-cw"></i>重新检查</button>
+          </header>
+
+          <div class="diagnostic-summary pending" id="diagnostic-summary">
+            <span class="status-indicator pending" id="diagnostic-summary-icon"><i data-lucide="loader-circle"></i></span><div><strong id="diagnostic-summary-title">等待检查</strong><p id="diagnostic-summary-message">所有结果均来自本机动态检测。</p></div><span id="diagnostic-time">—</span>
+          </div>
+
+          <div class="diagnostic-table" role="table" aria-label="运行诊断结果">
+            <div class="diagnostic-header" role="row"><span role="columnheader">检查项</span><span role="columnheader">动态检测值</span><span role="columnheader">结果与建议</span></div>
+            <div id="diagnostic-results" class="diagnostic-results"><div class="diagnostic-loading"><i data-lucide="loader-circle"></i>正在读取本机状态…</div></div>
+          </div>
+
+          <div class="diagnostic-actions">
+            <button class="primary-button" type="button" data-refresh-diagnostics><i data-lucide="refresh-cw"></i>重新检查</button>
+            <button class="secondary-button" id="reinstall-runtime" type="button"><i data-lucide="package-open"></i>重新安装运行时</button>
+            <button class="secondary-button" id="open-state" type="button"><i data-lucide="folder-open"></i>打开运行目录</button>
+            <button class="secondary-button" id="open-logs" type="button"><i data-lucide="file-text"></i>查看日志</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <section class="notice" id="notice" hidden aria-live="assertive"><div><i data-lucide="triangle-alert"></i><div><strong id="notice-title"></strong><p id="notice-message"></p></div></div><button class="text-button" id="notice-details" type="button">查看详情</button></section>
+
+    <dialog id="error-dialog" class="modal error-modal">
+      <form method="dialog"><div class="modal-heading"><div><span class="section-kicker danger-text">ACTION DETAILS</span><h2 id="error-title">操作未完成</h2></div><button class="icon-button" value="cancel" aria-label="关闭" type="submit"><i data-lucide="x"></i></button></div><p id="error-message" class="error-summary"></p><pre id="error-detail"></pre><div class="modal-actions"><button class="primary-button" value="default" type="submit">知道了</button></div></form>
+    </dialog>
+
+    <dialog id="edit-theme-dialog" class="modal edit-theme-modal">
+      <form method="dialog"><div class="modal-heading"><div><span class="section-kicker">THEME METADATA</span><h2>编辑主题</h2></div><button class="icon-button" value="cancel" aria-label="关闭" type="submit"><i data-lucide="x"></i></button></div>
+        <label class="field"><span>主题名称</span><input id="edit-theme-name" maxlength="80" required /></label>
+        <label class="field"><span>分组</span><input id="edit-theme-group" maxlength="40" list="theme-group-options" placeholder="留空归入未分组" /></label>
+        <div class="modal-actions"><button class="secondary-button" value="cancel" type="submit">取消</button><button class="primary-button" id="save-theme-metadata" type="button"><i data-lucide="save"></i>保存修改</button></div>
+      </form>
+    </dialog>
+
+    <datalist id="theme-group-options"></datalist>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="../node_modules/lucide/dist/umd/lucide.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
