@@ -25,6 +25,7 @@ let activeGroup = "all";
 let searchTerm = "";
 let studioImage;
 let toastTimer;
+let noticeTimer;
 let refreshTimer;
 let busy = false;
 let latestError;
@@ -42,6 +43,7 @@ function escapeHtml(value) {
 }
 
 function showToast(message) {
+  dismissError();
   const element = $("#toast");
   element.textContent = message;
   element.classList.add("visible");
@@ -49,11 +51,19 @@ function showToast(message) {
   toastTimer = setTimeout(() => element.classList.remove("visible"), 3200);
 }
 
+function dismissError() {
+  clearTimeout(noticeTimer);
+  noticeTimer = undefined;
+  $("#notice").hidden = true;
+}
+
 function showError(error) {
   latestError = error.details || { title: "操作未完成", message: error.message, detail: error.stack || error.message };
   $("#notice-title").textContent = latestError.title;
   $("#notice-message").textContent = latestError.message;
   $("#notice").hidden = false;
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(dismissError, 12000);
   $("#error-title").textContent = latestError.title;
   $("#error-message").textContent = latestError.message;
   $("#error-detail").textContent = latestError.detail || "没有更多诊断信息。";
@@ -93,6 +103,7 @@ function renderStatus(status) {
   latestStatus = status;
   const ready = Boolean(status.available);
   const partial = Boolean(status.runtimeFilesPresent);
+  const upgradeRequired = Boolean(status.upgradeRequired);
   const session = status.session || (status.running ? "active" : "off");
   const theme = currentTheme();
   const themeName = status.activeThemeName || status.appliedThemeName || status.themeName || "未选择主题";
@@ -100,12 +111,12 @@ function renderStatus(status) {
   const health = ready ? "ok" : partial ? "warning" : "error";
 
   setStatusIndicator($("#sidebar-status-icon"), health);
-  $("#sidebar-status").textContent = ready ? "运行时就绪" : partial ? "安装未完成" : "需要安装";
+  $("#sidebar-status").textContent = ready ? "运行时就绪" : upgradeRequired ? "需要更新" : partial ? "安装未完成" : "需要安装";
   $("#sidebar-platform").textContent = status.platform || "未检测平台";
 
   $("#overview-banner").className = `status-banner ${health}`;
   setStatusIndicator($("#overview-status-icon"), health);
-  $("#overview-status-title").textContent = ready ? "Codex Dream Skin 已就绪" : partial ? "运行时安装尚未完成" : "首次使用需要安装运行时";
+  $("#overview-status-title").textContent = ready ? "Codex Dream Skin 已就绪" : upgradeRequired ? "检测到旧运行时" : partial ? "运行时安装尚未完成" : "首次使用需要安装运行时";
   $("#overview-status-message").textContent = status.message || status.error?.message || "重新检查后获取当前状态。";
   $("#overview-platform").textContent = status.platform || "—";
 
@@ -117,7 +128,7 @@ function renderStatus(status) {
 
   const primary = $(".command-panel .primary-button[data-action]");
   primary.dataset.action = ready ? "start" : "install";
-  primary.querySelector("strong").textContent = ready ? "应用皮肤" : partial ? "继续安装" : "安装运行时";
+  primary.querySelector("strong").textContent = ready ? "应用皮肤" : upgradeRequired ? "更新运行时" : partial ? "继续安装" : "安装运行时";
   primary.querySelector("small").textContent = ready ? "启动或刷新当前主题" : "准备当前平台所需组件";
   primary.querySelector("svg")?.remove();
   primary.insertAdjacentHTML("afterbegin", `<i data-lucide="${ready ? "play" : "download"}"></i>`);
@@ -289,7 +300,7 @@ async function perform(actionName) {
   try {
     const result = await window.dreamSkin.performAction(actionName);
     if (result?.canceled) return;
-    $("#notice").hidden = true;
+    dismissError();
     showToast(actionName === "install" ? "运行时安装完成" : actionName === "restore" ? "已恢复官方外观" : "操作已完成");
     await delayedRefresh();
   } catch (error) {
@@ -530,7 +541,13 @@ $("#studio-preview").addEventListener("pointerdown", (event) => {
 $("#reinstall-runtime").addEventListener("click", () => perform("install"));
 $("#open-state").addEventListener("click", async () => { try { await window.dreamSkin.openState(); } catch (error) { showError(error); } });
 $("#open-logs").addEventListener("click", async () => { try { await window.dreamSkin.openLogs(); } catch (error) { showError(error); } });
-$("#notice-details").addEventListener("click", () => { if (latestError) $("#error-dialog").showModal(); });
+$("#notice-details").addEventListener("click", () => {
+  if (!latestError) return;
+  clearTimeout(noticeTimer);
+  if (!$("#error-dialog").open) $("#error-dialog").showModal();
+});
+$("#notice-close").addEventListener("click", dismissError);
+$("#error-dialog").addEventListener("close", dismissError);
 
 refreshIcons();
 loadAppInfo();

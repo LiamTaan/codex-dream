@@ -167,7 +167,7 @@
       </main>
     </div>
 
-    <section class="notice" id="notice" hidden aria-live="assertive"><div><i data-lucide="triangle-alert"></i><div><strong id="notice-title"></strong><p id="notice-message"></p></div></div><button class="text-button" id="notice-details" type="button">查看详情</button></section>
+    <section class="notice" id="notice" hidden role="alert" aria-live="assertive"><div><i data-lucide="triangle-alert"></i><div><strong id="notice-title"></strong><p id="notice-message"></p></div></div><div class="notice-actions"><button class="text-button" id="notice-details" type="button">查看详情</button><button class="icon-button notice-close" id="notice-close" type="button" aria-label="关闭错误提示"><i data-lucide="x"></i></button></div></section>
 
     <dialog id="error-dialog" class="modal error-modal">
       <form method="dialog"><div class="modal-heading"><div><span class="section-kicker danger-text">ACTION DETAILS</span><h2 id="error-title">操作未完成</h2></div><button class="icon-button" value="cancel" aria-label="关闭" type="submit"><i data-lucide="x"></i></button></div><p id="error-message" class="error-summary"></p><pre id="error-detail"></pre><div class="modal-actions"><button class="primary-button" value="default" type="submit">知道了</button></div></form>

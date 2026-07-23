@@ -35,6 +35,10 @@ function installedPlatformRoot() {
     ? path.join(process.env.LOCALAPPDATA || "", "CodexDreamSkin", "engine")
     : path.join(process.env.HOME || "", ".codex", "codex-dream-skin-studio");
 }
+function installedRuntimeVersion() {
+  try { return fs.readFileSync(path.join(installedPlatformRoot(), "VERSION"), "utf8").trim(); }
+  catch { return "unknown"; }
+}
 function runtimeFilesPresent() {
   const requiredScripts = isWindows
     ? ["start-dream-skin.ps1", "desktop-actions.ps1"]
@@ -45,7 +49,10 @@ function installationComplete() {
   const marker = isWindows
     ? path.join(stateRoot(), "config.before-dream-skin.toml.appearance.json")
     : path.join(stateRoot(), "theme-backup.json");
-  return runtimeFilesPresent() && fs.existsSync(marker);
+  const requiredVersion = runtimeVersion();
+  const currentVersion = installedRuntimeVersion();
+  return runtimeFilesPresent() && fs.existsSync(marker)
+    && (requiredVersion === "unknown" || requiredVersion === currentVersion);
 }
 function platformRoot(useSource = false) {
   // Development builds must execute the checked-out scripts so fixes are testable
@@ -78,26 +85,33 @@ async function getPreflight() {
   }
 }
 
-async function getStatus() {
+async function getStatus(deep = false) {
   const preflight = await getPreflight();
   if (!installationComplete()) {
     const partial = runtimeFilesPresent();
+    const requiredVersion = runtimeVersion();
+    const currentVersion = installedRuntimeVersion();
+    const upgradeRequired = partial && requiredVersion !== "unknown" && currentVersion !== requiredVersion;
     return {
       platform: isWindows ? "Windows" : "macOS",
       available: false,
       installed: false,
       runtimeFilesPresent: partial,
-      runtimeVersion: runtimeVersion(),
+      runtimeVersion: requiredVersion,
+      installedRuntimeVersion: currentVersion,
+      upgradeRequired,
       ...preflight,
       session: "not-installed",
-      message: partial
+      message: upgradeRequired
+        ? `检测到旧运行时 v${currentVersion}，需要更新到 v${requiredVersion}。`
+        : partial
         ? "运行时文件已准备，但安装尚未完成。关闭 Codex 后可继续安装。"
         : "首次使用需要安装换肤运行时。",
     };
   }
   try {
     const result = isMac
-      ? await runPlatformScript("status-dream-skin-macos.sh", ["--json"])
+      ? await runPlatformScript("status-dream-skin-macos.sh", deep ? ["--json", "--deep"] : ["--json"])
       : await runPlatformScript("desktop-actions.ps1", ["-Action", "Status"]);
     const data = parseJsonOutput(result.stdout);
     return {
@@ -105,6 +119,8 @@ async function getStatus() {
       available: true,
       installed: true,
       runtimeVersion: runtimeVersion(),
+      installedRuntimeVersion: installedRuntimeVersion(),
+      upgradeRequired: false,
       ...preflight,
       ...data,
       message: data.operationMessage || "运行时已安装，可以应用或切换主题。",
@@ -179,13 +195,15 @@ function readJsonFile(filePath) {
 
 async function getDiagnostics() {
   const preflight = await getPreflight();
-  const status = await getStatus();
+  const status = await getStatus(true);
   const sessionState = readJsonFile(statePath()) || {};
   const theme = readJsonFile(path.join(activeThemeRoot(), "theme.json"));
   const imageName = theme && path.basename(String(theme.image || ""));
   const imagePath = imageName ? path.join(activeThemeRoot(), imageName) : "";
   const installed = installationComplete();
-  const activeSession = ["active", "applying", "paused"].includes(status.session) || Boolean(status.running);
+  const activeSession = isMac
+    ? status.session === "active" && status.injectorAlive === true && status.cdpOk === true
+    : ["active", "applying", "paused"].includes(status.session) || Boolean(status.running);
   const checks = [
     {
       id: "codex",
@@ -205,8 +223,8 @@ async function getDiagnostics() {
       id: "cdp",
       title: "CDP 会话",
       status: activeSession ? "ok" : installed ? "warning" : "pending",
-      value: status.port ? `127.0.0.1:${status.port}（动态检测）` : `${isMac ? 9341 : 9335}（平台默认）`,
-      detail: activeSession ? "本机回环调试会话已建立。" : installed ? "运行时已安装，应用主题后会建立会话。" : "安装运行时后检测实际端口。",
+      value: status.port ? `本机安全回环 127.0.0.1:${status.port}` : `${isMac ? 9341 : 9335}（平台默认）`,
+      detail: activeSession ? "CDP 仅监听本机 127.0.0.1，会话已验证。" : installed ? "127.0.0.1 是正常的本机地址；当前端口尚未建立或未通过验证。" : "安装运行时后检测实际端口。",
     },
     {
       id: "node",

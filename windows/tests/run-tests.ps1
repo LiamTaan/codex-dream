@@ -18,6 +18,7 @@ try {
     Copy-Item -LiteralPath (Join-Path $Root $directoryName) -Destination $runtimeSourceRoot `
       -Recurse -Force -ErrorAction Stop
   }
+  Copy-Item -LiteralPath (Join-Path $Root 'VERSION') -Destination $runtimeSourceRoot -Force -ErrorAction Stop
   $zoneMarkedSourceScript = Join-Path $runtimeSourceRoot 'scripts\start-dream-skin.ps1'
   Set-Content -LiteralPath $zoneMarkedSourceScript -Stream 'Zone.Identifier' `
     -Value "[ZoneTransfer]`r`nZoneId=3`r`n" -Encoding Ascii

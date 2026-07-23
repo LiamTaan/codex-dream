@@ -41,6 +41,14 @@ The upstream project established the core macOS and Windows theming foundation: 
 
 We gratefully acknowledge the upstream maintainers and contributors. The source is not being presented as an unrelated clean-room implementation. See [LICENSE](./LICENSE), [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md), and [macos/NOTICE.md](./macos/NOTICE.md).
 
+## v1.1.2 highlights
+
+- detect managed-runtime version drift and require an upgrade after replacing or re-downloading the desktop app;
+- stop the previous macOS injector before replacing its runtime directory, avoiding PID/launchd handoff races;
+- prevent the in-Codex applying indicator from remaining indefinitely when a filesystem event is missed;
+- add dismissible, automatically expiring desktop error notices that clear after a successful action;
+- perform real deep CDP diagnostics and label `127.0.0.1` as the expected secure loopback address.
+
 ## v1.1.1 highlights
 
 - fixed incomplete macOS application-bundle signing that caused quarantined downloads to be reported as damaged;

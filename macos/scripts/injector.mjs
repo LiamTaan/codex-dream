@@ -11,7 +11,7 @@ const execFileAsync = promisify(execFile);
 const scriptPath = fileURLToPath(import.meta.url);
 const here = path.dirname(scriptPath);
 const root = path.resolve(here, "..");
-const SKIN_VERSION = "1.2.0";
+const SKIN_VERSION = "1.2.1";
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const CDP_ID_PATTERN = /^[A-Za-z0-9._-]{1,200}$/;
 const MAX_ART_BYTES = 16 * 1024 * 1024;
@@ -1209,6 +1209,7 @@ async function watchOperationState(statePath, onState) {
   const basename = path.basename(statePath);
   let watcher = null;
   let readTimer = null;
+  let pollTimer = null;
   let readChain = Promise.resolve();
   let closed = false;
   let lastSnapshotKey = "";
@@ -1250,11 +1251,16 @@ async function watchOperationState(statePath, onState) {
   }
 
   readChain = readChain.then(readLatest);
+  // Atomic write/rename of operation-state.plist can be missed by fs.watch on
+  // some macOS filesystem/runtime combinations. A lightweight poll closes the
+  // gap while keeping the watcher event-driven for normal updates.
+  pollTimer = setInterval(scheduleRead, 500);
   await readChain;
 
   return () => {
     closed = true;
     if (readTimer) clearTimeout(readTimer);
+    if (pollTimer) clearInterval(pollTimer);
     watcher?.close();
   };
 }

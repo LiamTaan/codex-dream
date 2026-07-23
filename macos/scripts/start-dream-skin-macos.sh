@@ -91,7 +91,15 @@ if codex_is_running && [ "$DEBUG_READY" = "false" ]; then
 fi
 
 if [ -f "$STATE_PATH" ]; then
-  stop_recorded_injector
+  # An older/dev watcher may be exiting at the same moment a packaged runtime
+  # takes ownership. Retry once so that a harmless launchd/PID transition does
+  # not abort the upgrade, while the identity checks still fail closed for a
+  # genuinely mismatched live process.
+  if ! stop_recorded_injector; then
+    /bin/sleep 0.25
+    stop_recorded_injector \
+      || fail "Could not safely replace the previous Dream Skin runtime. Reinstall the runtime and try again."
+  fi
 fi
 
 INJECTOR_PID=""
@@ -168,5 +176,12 @@ cleanup_verify_output
 mark_state_active || fail "Could not commit the verified active skin state."
 write_operation_state success "皮肤已应用" "$OPERATION_TOKEN" \
   || fail "Could not publish the completed apply state."
+# The watcher normally observes operation-state.plist and changes the in-app
+# progress surface to its terminal state. Keep an explicit CDP completion call
+# as a race-safe fallback when an atomic plist rename is missed by fs.watch.
+if [ -n "$OPERATION_TOKEN" ]; then
+  finish_client_operation "$PORT" success "皮肤已应用" "$OPERATION_TOKEN" 1500 \
+    >/dev/null 2>&1 || true
+fi
 OPERATION_FINISHED="true"
 printf 'ChatGPT Dream Skin %s is active on loopback port %s.\n' "$SKIN_VERSION" "$PORT"
