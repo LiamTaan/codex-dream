@@ -41,10 +41,14 @@ The upstream project established the core macOS and Windows theming foundation: 
 
 We gratefully acknowledge the upstream maintainers and contributors. The source is not being presented as an unrelated clean-room implementation. See [LICENSE](./LICENSE), [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md), and [macos/NOTICE.md](./macos/NOTICE.md).
 
-## v1.1.4 highlights
+## v1.1.5 highlights
 
 - Windows theme switches now reuse and verify the active injector session instead of restarting the watcher or Codex for every change, preventing a healthy switch from remaining permanently busy.
 - Windows diagnostics now read the managed `active-theme` directory, so installed theme resources are reported accurately.
+
+## v1.1.4 highlights
+
+- Windows theme switches now have an explicit command timeout as a last-resort guard for an unhealthy external process.
 
 ## v1.1.3 highlights
 

@@ -33,9 +33,10 @@ test("packaged app requires managed runtime version parity", () => {
   assert.match(rendererSource, /更新运行时/);
 });
 
-test("both platform runtimes expose the same upgrade version", () => {
+test("Windows live-apply changes require a Windows runtime upgrade without changing macOS", () => {
   const macVersion = fs.readFileSync(path.join(repositoryRoot, "macos", "VERSION"), "utf8").trim();
   const windowsVersion = fs.readFileSync(path.join(repositoryRoot, "windows", "VERSION"), "utf8").trim();
   assert.equal(macVersion, "1.2.1");
-  assert.equal(windowsVersion, macVersion);
+  assert.equal(windowsVersion, "1.2.2");
+  assert.notEqual(windowsVersion, macVersion);
 });

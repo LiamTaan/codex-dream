@@ -13,6 +13,6 @@ assert.match(
   /Copy-Item -LiteralPath \(Join-Path \$sourceRoot 'VERSION'\) -Destination \$stagingRoot/,
   "Windows runtime installation must copy its version marker into the managed engine.",
 );
-assert.equal(fs.readFileSync(path.join(root, "VERSION"), "utf8").trim(), "1.2.1");
+assert.equal(fs.readFileSync(path.join(root, "VERSION"), "utf8").trim(), "1.2.2");
 
 console.log("PASS: Windows managed runtime carries an explicit upgrade version marker.");
