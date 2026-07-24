@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)]
-  [ValidateSet('Preflight', 'Status', 'StopCodexForInstall', 'ApplyImage', 'ApplyPreset', 'ApplySaved', 'Pause')]
+  [ValidateSet('Preflight', 'Status', 'StopCodexForInstall', 'ApplyImage', 'ApplyPreset', 'ApplySaved', 'ApplyLive', 'Pause')]
   [string]$Action,
   [string]$ImagePath,
   [string]$Name,
@@ -136,6 +136,10 @@ switch ($Action) {
     $result = Set-DreamSkinActiveTheme -ImagePath $savedTheme.ImagePath -Theme $theme -StateRoot $StateRoot
     Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
     Write-DesktopJson ([ordered]@{ activeThemeName = "$($result.Theme.name)"; activeImage = "$($result.ImagePath)" })
+  }
+  'ApplyLive' {
+    $result = Invoke-DreamSkinLiveApply -StateRoot $StateRoot
+    Write-DesktopJson ([ordered]@{ available = [bool]$result.Available; applied = [bool]$result.Applied; message = "$($result.Message)" })
   }
   'Pause' {
     Set-DreamSkinPaused -Paused $true -StateRoot $StateRoot | Out-Null

@@ -499,6 +499,58 @@ function Show-DreamSkinOperationUi {
   }
 }
 
+# A theme file change is normally picked up by the watcher.  The manager uses
+# this helper to make that hand-off explicit and verify the new payload without
+# tearing down a healthy watcher (or restarting Codex) for every theme switch.
+function Test-DreamSkinLiveWatcher {
+  param([Parameter(Mandatory = $true)][object]$Session)
+  $state = $Session.State
+  if ($null -eq $state -or -not $state.injectorPid) { return $false }
+  $processId = 0
+  if (-not [int]::TryParse("$($state.injectorPid)", [ref]$processId) -or $processId -le 0) { return $false }
+  $process = Get-CimInstance Win32_Process -Filter "ProcessId = $processId" -ErrorAction SilentlyContinue
+  if ($null -eq $process) { return $false }
+  $processPath = Get-DreamSkinProcessExecutablePath -ProcessInfo $process
+  $commandLine = "$($process.CommandLine)"
+  if (-not $processPath -or -not $commandLine) { return $false }
+  $nodeMatches = [System.IO.Path]::GetFileName("$processPath") -ieq 'node.exe' -and
+    (Test-DreamSkinPathEqual -Left $processPath -Right "$($state.nodePath)")
+  $injectorMatches = (Test-DreamSkinCommandLineToken -CommandLine $commandLine -Token "$($state.injectorPath)") -and
+    (Test-DreamSkinCommandLineToken -CommandLine $commandLine -Token '--watch')
+  $portPattern = '(?i)(?:^|\s)--port(?:=|\s+)' + [regex]::Escape("$($Session.Port)") + '(?=$|\s)'
+  $browserPattern = '(?:^|\s)(?i:--browser-id)(?:=|\s+)' + [regex]::Escape($Session.BrowserId) + '(?=$|\s)'
+  $startedAt = Get-DreamSkinProcessStartedAt -ProcessId $processId
+  $startMatches = -not $state.injectorStartedAt -or $startedAt -eq "$($state.injectorStartedAt)"
+  return [bool]($nodeMatches -and $injectorMatches -and
+    [regex]::IsMatch($commandLine, $portPattern) -and [regex]::IsMatch($commandLine, $browserPattern) -and $startMatches)
+}
+
+function Invoke-DreamSkinLiveApply {
+  param(
+    [string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'),
+    [int]$TimeoutMs = 12000
+  )
+  if ($TimeoutMs -lt 250 -or $TimeoutMs -gt 120000) {
+    throw "Invalid live-apply timeout: $TimeoutMs"
+  }
+  $session = Get-DreamSkinLiveSessionContext -StateRoot $StateRoot
+  if ($null -eq $session -or -not (Test-DreamSkinLiveWatcher -Session $session)) {
+    return [pscustomobject]@{ Available = $false; Applied = $false; Message = 'No verified live watcher.' }
+  }
+  $application = Invoke-DreamSkinNative -FilePath $session.NodePath -ArgumentList @(
+    $session.Injector,
+    '--once',
+    '--port', "$($session.Port)",
+    '--browser-id', $session.BrowserId,
+    '--theme-dir', $session.Paths.Active,
+    '--timeout-ms', "$TimeoutMs"
+  ) -DiscardStderr
+  if ($application.ExitCode -ne 0) {
+    return [pscustomobject]@{ Available = $true; Applied = $false; Message = 'Live theme verification failed.' }
+  }
+  return [pscustomobject]@{ Available = $true; Applied = $true; Message = 'Theme applied to the active Codex session.' }
+}
+
 # Mirror macOS pause: mark paused, show in-app loading, then strip the live skin over CDP.
 # Writing only the pause file leaves CSS in the renderer until the watcher polls.
 function Invoke-DreamSkinLiveRemove {

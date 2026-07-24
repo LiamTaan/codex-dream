@@ -43,7 +43,8 @@ We gratefully acknowledge the upstream maintainers and contributors. The source 
 
 ## v1.1.4 highlights
 
-- bound Windows runtime scripts to 90 seconds so a stalled operation returns control to the app with an actionable error instead of leaving the UI in a permanent busy state.
+- Windows theme switches now reuse and verify the active injector session instead of restarting the watcher or Codex for every change, preventing a healthy switch from remaining permanently busy.
+- Windows diagnostics now read the managed `active-theme` directory, so installed theme resources are reported accurately.
 
 ## v1.1.3 highlights
 

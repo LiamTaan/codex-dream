@@ -8,6 +8,23 @@ const repositoryRoot = path.join(desktopRoot, "..");
 const mainSource = fs.readFileSync(path.join(desktopRoot, "main.js"), "utf8");
 const rendererSource = fs.readFileSync(path.join(desktopRoot, "renderer", "app.js"), "utf8");
 
+test("desktop diagnostics read the active theme from each platform's managed location", () => {
+  assert.match(mainSource, /isWindows \? "active-theme" : "theme"/);
+});
+
+test("Windows theme switches keep an active watcher alive and verify the new payload", () => {
+  assert.match(mainSource, /desktop-actions\.ps1", \["-Action", "ApplyLive"\]/);
+  assert.match(mainSource, /if \(live\.applied\) return/);
+  assert.match(mainSource, /if \(live\.available\) throw new Error/);
+  assert.match(mainSource, /await runPlatformScript\("start-dream-skin\.ps1", \["-PromptRestart"\]\)/);
+  const actionsSource = fs.readFileSync(path.join(repositoryRoot, "windows", "scripts", "desktop-actions.ps1"), "utf8");
+  const themeSource = fs.readFileSync(path.join(repositoryRoot, "windows", "scripts", "theme-windows.ps1"), "utf8");
+  assert.match(actionsSource, /'ApplyLive'/);
+  assert.match(themeSource, /function Invoke-DreamSkinLiveApply/);
+  assert.match(themeSource, /'--once'/);
+  assert.match(themeSource, /function Test-DreamSkinLiveWatcher/);
+});
+
 test("packaged app requires managed runtime version parity", () => {
   assert.match(mainSource, /function installedRuntimeVersion\(\)/);
   assert.match(mainSource, /requiredVersion === "unknown" \|\| requiredVersion === currentVersion/);

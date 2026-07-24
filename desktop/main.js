@@ -29,7 +29,9 @@ function codexConfigPath() {
   const home = isWindows ? process.env.USERPROFILE : process.env.HOME;
   return path.join(home || "", ".codex", "config.toml");
 }
-function activeThemeRoot() { return path.join(stateRoot(), "theme"); }
+function activeThemeRoot() {
+  return path.join(stateRoot(), isWindows ? "active-theme" : "theme");
+}
 function statePath() { return path.join(stateRoot(), "state.json"); }
 function installedPlatformRoot() {
   return isWindows
@@ -176,7 +178,7 @@ async function createImageTheme(imagePath, options) {
       if (normalized.name) args.push("-Name", normalized.name);
       if (normalized.group) args.push("-Group", normalized.group);
       await runPlatformScript("desktop-actions.ps1", args);
-      await runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]);
+      await ensureWindowsThemeApplied();
     }
   } catch (error) {
     if (isMac) {
@@ -190,6 +192,14 @@ async function createImageTheme(imagePath, options) {
   }
   approvedImagePaths.delete(resolvedImagePath);
   return { created: true, imagePath: resolvedImagePath };
+}
+
+async function ensureWindowsThemeApplied() {
+  const live = parseJsonOutput((await runPlatformScript("desktop-actions.ps1", ["-Action", "ApplyLive"])).stdout);
+  if (live.applied) return { applied: true, live: true };
+  if (live.available) throw new Error(live.message || "The active Codex session could not verify the new theme.");
+  await runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]);
+  return { applied: true, live: false };
 }
 
 function readJsonFile(filePath) {
@@ -314,8 +324,7 @@ async function applyTheme(themeId, source) {
   if (isMac) return performThemeScript("switch-theme-macos.sh", ["--id", theme.id]);
   const action = theme.source === "custom" ? "ApplySaved" : "ApplyPreset";
   await runPlatformScript("desktop-actions.ps1", ["-Action", action, "-ThemeId", theme.id]);
-  await runPlatformScript("start-dream-skin.ps1", ["-PromptRestart"]);
-  return { applied: true };
+  return ensureWindowsThemeApplied();
 }
 
 async function deleteTheme(themeId, source, ownerWindow) {
