@@ -41,6 +41,10 @@ The upstream project established the core macOS and Windows theming foundation: 
 
 We gratefully acknowledge the upstream maintainers and contributors. The source is not being presented as an unrelated clean-room implementation. See [LICENSE](./LICENSE), [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md), and [macos/NOTICE.md](./macos/NOTICE.md).
 
+## v1.1.4 highlights
+
+- bound Windows runtime scripts to 90 seconds so a stalled operation returns control to the app with an actionable error instead of leaving the UI in a permanent busy state.
+
 ## v1.1.3 highlights
 
 - fix the Windows renderer payload so its reported injected version always matches the managed runtime;

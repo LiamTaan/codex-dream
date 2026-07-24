@@ -101,6 +101,7 @@ function friendlyError(error) {
     [/tray before reinstalling/i, "TRAY_RUNNING", "请先退出托盘程序", "Codex Dream Skin 托盘程序仍在运行。请从系统托盘退出后重试。"],
     [/Runtime state directory is created after installation/i, "STATE_MISSING", "运行目录尚未创建", "完成运行时安装后，这里会显示主题、日志和状态文件。"],
     [/Install the runtime before/i, "RUNTIME_MISSING", "请先安装运行时", "完成运行时安装后才能执行此操作。"],
+    [/timed out|ETIMEDOUT/i, "OPERATION_TIMEOUT", "操作超时", "运行时操作超过 90 秒，已停止等待。请重新打开 Codex Dream Skin 后重试。"],
     [/cancelled|canceled/i, "CANCELLED", "操作已取消", "没有更改当前设置。"],
   ];
   for (const [pattern, code, title, message] of rules) {

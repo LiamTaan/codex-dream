@@ -25,6 +25,13 @@ test("unknown command failures keep the command out of the summary", () => {
   assert.doesNotMatch(result.message, /\/bin\/bash|private\/path/);
 });
 
+test("timed out Windows operations produce an actionable error", () => {
+  const result = friendlyError({ message: "Command failed: powershell.exe\nOperation timed out" });
+  assert.equal(result.code, "OPERATION_TIMEOUT");
+  assert.equal(result.title, "操作超时");
+  assert.match(result.message, /90 秒/);
+});
+
 test("theme options accept only supported values", () => {
   assert.deepEqual(normalizeThemeOptions({ name: "  My Skin  ", appearance: "dark", safeArea: "left", taskMode: "banner" }), {
     name: "My Skin",

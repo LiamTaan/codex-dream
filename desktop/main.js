@@ -10,6 +10,7 @@ const execFileAsync = promisify(execFile);
 const isWindows = process.platform === "win32";
 const isMac = process.platform === "darwin";
 const approvedImagePaths = new Set();
+const WINDOWS_SCRIPT_TIMEOUT_MS = 90_000;
 
 function sourceSkinRoot() {
   return app.isPackaged ? path.join(process.resourcesPath, "skin") : path.resolve(__dirname, "..");
@@ -66,7 +67,10 @@ function run(command, args, options = {}) {
 function runPlatformScript(script, args = [], useSource = false) {
   const root = platformRoot(useSource);
   return isWindows
-    ? run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath(script, useSource), ...args], { cwd: root })
+    ? run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath(script, useSource), ...args], {
+      cwd: root,
+      timeout: WINDOWS_SCRIPT_TIMEOUT_MS,
+    })
     : run("/bin/bash", [scriptPath(script, useSource), ...args], { cwd: root });
 }
 function parseJsonOutput(stdout) {
