@@ -8,11 +8,17 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const windowsRoot = path.resolve(here, "..");
 const template = await fs.readFile(path.join(windowsRoot, "assets", "renderer-inject.js"), "utf8");
 const css = await fs.readFile(path.join(windowsRoot, "assets", "dream-skin.css"), "utf8");
+const skinVersion = (await fs.readFile(path.join(windowsRoot, "VERSION"), "utf8")).trim();
 const buildPayload = (config = {}) => template
   .replace("__DREAM_CSS_JSON__", JSON.stringify(".fixture { color: blue; }"))
   .replace("__DREAM_ART_JSON__", JSON.stringify("data:image/png;base64,AA=="))
-  .replace("__DREAM_THEME_JSON__", JSON.stringify(config));
+  .replace("__DREAM_THEME_JSON__", JSON.stringify(config))
+  .replace("__DREAM_SKIN_VERSION_JSON__", JSON.stringify(skinVersion));
 const payload = buildPayload();
+
+assert.match(template, /const VERSION = __DREAM_SKIN_VERSION_JSON__;/,
+  "The renderer version must be supplied by the injector, not duplicated in the template.");
+assert.doesNotMatch(payload, /__DREAM_[A-Z_]+__/, "The injected renderer payload must not retain template placeholders.");
 
 assert.doesNotMatch(
   css,
@@ -351,6 +357,8 @@ const configuredPayload = buildPayload({
 });
 const configuredResult = vm.runInNewContext(configuredPayload, configured.context);
 assert.equal(configuredResult.adaptive, true);
+assert.equal(configuredResult.version, skinVersion);
+assert.equal(configured.context.window.__CODEX_DREAM_SKIN_STATE__.version, skinVersion);
 assert.equal(configured.rootClasses.has("dream-theme-light"), true);
 assert.equal(configured.rootClasses.has("dream-theme-dark"), false);
 assert.equal(configured.rootClasses.has("dream-focus-left"), true);

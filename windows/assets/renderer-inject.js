@@ -1,4 +1,5 @@
 ((cssText, artDataUrl, rawConfig) => {
+  const VERSION = __DREAM_SKIN_VERSION_JSON__;
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
   const STYLE_ID = "codex-dream-skin-style";
   const CHROME_ID = "codex-dream-skin-chrome";
@@ -466,7 +467,7 @@
   }
   const timer = setInterval(ensure, 8000);
   window[STATE_KEY] = {
-    ensure, cleanup, observer, rootObserver, timer, scheduler, analysisTimer, artUrl, profile, config, installToken, version: "1.2.0",
+    ensure, cleanup, observer, rootObserver, timer, scheduler, analysisTimer, artUrl, profile, config, installToken, version: VERSION,
   };
   ensure();
   const analysisPromise = analyzeArt();
@@ -478,5 +479,5 @@
     state.profile = result;
     ensure();
   });
-  return { installed: true, version: "1.2.0", adaptive: true };
+  return { installed: true, version: VERSION, adaptive: true };
 })(__DREAM_CSS_JSON__, __DREAM_ART_JSON__, __DREAM_THEME_JSON__)
